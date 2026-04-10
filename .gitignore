@@ -1,0 +1,113 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .NET / Backend
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Build output
+backend/src/*/bin/
+backend/src/*/obj/
+backend/tests/*/bin/
+backend/tests/*/obj/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+*.userprefs
+
+# Publish profiles
+backend/**/*.pubxml
+backend/**/*.pubxml.user
+
+# NuGet
+*.nupkg
+*.snupkg
+backend/**/packages/
+backend/**/.nuget/
+
+# EF Core migrations snapshot (keep migrations, ignore snapshot on some teams)
+# backend/src/Infrastructure/Migrations/
+
+# Secrets / config overrides
+backend/**/appsettings.*.json
+!backend/**/appsettings.json
+!backend/**/appsettings.Development.json
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Flutter / Mobile
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Dart/Flutter build output
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+
+# Android
+mobile/android/.gradle/
+mobile/android/captures/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/google-services.json
+mobile/android/**/*.keystore
+mobile/android/**/*.jks
+
+# iOS / macOS
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/macos/Flutter/flutter_export_environment.sh
+mobile/macos/Flutter/Generated.xcconfig
+mobile/macos/Pods/
+mobile/macos/.symlinks/
+
+# Generated Dart files (keep for offline builds; remove if you prefer to regenerate)
+# mobile/lib/**/*.freezed.dart
+# mobile/lib/**/*.g.dart
+
+# Coverage
+mobile/coverage/
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Docker / Infrastructure
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OS & editors
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Logs & temp
+# ═══════════════════════════════════════════════════════════════════════════════
+
+*.log
+*.tmp
+*.temp
