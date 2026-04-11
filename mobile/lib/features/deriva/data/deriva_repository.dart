@@ -26,9 +26,9 @@ class DerivaRepository implements IDerivaRepository {
     required double lat,
     required double lng,
   }) async {
-    final response = await _client.get<Map<String, dynamic>>(
+    final response = await _client.post<Map<String, dynamic>>(
       '/deriva/sessions/$sessionId/next-instruction',
-      queryParameters: {'lat': lat, 'lng': lng, 'lang': 'es'},
+      data: {'latitude': lat, 'longitude': lng, 'lang': 'es'},
     );
     return DerivaInstructionModel.fromJson(response.data!);
   }

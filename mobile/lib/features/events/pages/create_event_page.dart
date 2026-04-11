@@ -42,13 +42,13 @@ class _CreateEventView extends StatefulWidget {
 class _CreateEventViewState extends State<_CreateEventView> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  String _actionType = 'Deriva';
-  String _interventionLevel = 'Leve';
+  String _actionType = 'Performativa';
+  String _interventionLevel = 'Bajo';
   String _visibility = 'Public';
   int _durationMinutes = 60;
 
-  static const _actionTypes = ['Deriva', 'Intervención', 'Encuentro', 'Exploración'];
-  static const _interventionLevels = ['Leve', 'Moderado', 'Intenso'];
+  static const _actionTypes = ['Performativa', 'Social', 'Sensorial', 'Poetica'];
+  static const _interventionLevels = ['Bajo', 'Medio', 'Alto'];
   static const _visibilities = ['Public', 'Unlisted'];
   static const _durations = [30, 60, 120, 240];
 
