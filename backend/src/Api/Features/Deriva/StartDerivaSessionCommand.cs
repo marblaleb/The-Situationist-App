@@ -34,8 +34,12 @@ public class StartDerivaSessionCommandHandler(
         var existing = await db.DerivaSessions
             .Where(s => s.UserId == request.UserId && s.Status == DerivaStatus.Active)
             .ToListAsync(ct);
-        foreach (var old in existing)
-            old.Status = DerivaStatus.Abandoned;
+        if (existing.Count > 0)
+        {
+            foreach (var old in existing)
+                old.Status = DerivaStatus.Abandoned;
+            await db.SaveChangesAsync(ct);
+        }
 
         var type = Enum.Parse<DerivaType>(request.Request.Type, ignoreCase: true);
         var now = DateTimeOffset.UtcNow;
