@@ -30,6 +30,15 @@ class AuthLogoutRequested extends AuthEvent {
   List<Object?> get props => [];
 }
 
+/// Fired by AuthCallbackPage on web after Google OAuth redirect returns a token.
+class AuthWebCallbackReceived extends AuthEvent {
+  final String token;
+  AuthWebCallbackReceived({required this.token});
+
+  @override
+  List<Object?> get props => [token];
+}
+
 // States
 abstract class AuthState extends Equatable {}
 
@@ -76,6 +85,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckRequested>(_onCheckRequested);
     on<AuthLoginCompleted>(_onLoginCompleted);
     on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthWebCallbackReceived>(_onWebCallbackReceived);
   }
 
   Future<void> _onCheckRequested(
@@ -113,5 +123,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await _repository.clearSession();
     emit(AuthUnauthenticated());
+  }
+
+  Future<void> _onWebCallbackReceived(
+    AuthWebCallbackReceived event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      // Save token first; saveSession implementation only uses the token field.
+      await _repository.saveSession(token: event.token, userId: '', email: '');
+      // Now decode userId/email from the saved token.
+      final user = await _repository.getCurrentUser();
+      if (user != null) {
+        emit(AuthAuthenticated(userId: user.userId, email: user.email));
+      } else {
+        emit(AuthUnauthenticated());
+      }
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
   }
 }

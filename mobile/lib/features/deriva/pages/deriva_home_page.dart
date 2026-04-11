@@ -8,7 +8,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/void_button.dart';
 import '../bloc/deriva_bloc.dart';
-import '../data/deriva_repository.dart';
 
 class DerivaHomePage extends StatelessWidget {
   final LocationService locationService;
@@ -22,10 +21,7 @@ class DerivaHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => DerivaBloc(repository: DerivaRepository(apiClient)),
-      child: _DerivaHomeView(locationService: locationService),
-    );
+    return _DerivaHomeView(locationService: locationService);
   }
 }
 

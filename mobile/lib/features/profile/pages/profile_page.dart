@@ -7,6 +7,8 @@ import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/void_button.dart';
 import '../../../features/auth/bloc/auth_bloc.dart';
 import '../../../shared/extensions/datetime_extensions.dart';
+import '../../../shared/models/event_model.dart';
+import '../../../shared/models/mission_model.dart';
 import '../bloc/profile_bloc.dart';
 import '../data/profile_repository.dart';
 
@@ -100,6 +102,42 @@ class _ProfileViewState extends State<_ProfileView> {
         _StatRow('derivas completadas', fp.derivasCompleted.toString()),
         const SizedBox(height: 8),
         _StatRow('misiones completadas', fp.missionsCompleted.toString()),
+
+        // ── Created events
+        const SizedBox(height: 24),
+        Container(height: 1, color: AppColors.fgMuted),
+        const SizedBox(height: 16),
+        Text('EVENTOS CREADOS', style: AppTextStyles.monoDisplay),
+        const SizedBox(height: 12),
+        if (state.createdEvents.isEmpty)
+          MonoText('ninguno', color: AppColors.fgMuted, size: 12)
+        else
+          ...state.createdEvents.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _ContentCard(
+                  title: e.title,
+                  subtitle: '${e.actionType} · ${e.status}',
+                ),
+              )),
+
+        // ── Created missions
+        const SizedBox(height: 24),
+        Container(height: 1, color: AppColors.fgMuted),
+        const SizedBox(height: 16),
+        Text('MISIONES CREADAS', style: AppTextStyles.monoDisplay),
+        const SizedBox(height: 12),
+        if (state.createdMissions.isEmpty)
+          MonoText('ninguna', color: AppColors.fgMuted, size: 12)
+        else
+          ...state.createdMissions.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _ContentCard(
+                  title: m.title,
+                  subtitle: '${m.clueCount} pistas · ${m.status}',
+                ),
+              )),
+
+        // ── Activity log
         const SizedBox(height: 24),
         Container(height: 1, color: AppColors.fgMuted),
         const SizedBox(height: 16),
@@ -162,6 +200,31 @@ class _StatRow extends StatelessWidget {
         MonoText(label, color: AppColors.fgSecondary),
         MonoText(value, size: 16),
       ],
+    );
+  }
+}
+
+class _ContentCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _ContentCard({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.fgMuted, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MonoText(title.toUpperCase(), size: 12),
+          const SizedBox(height: 4),
+          MonoText(subtitle, color: AppColors.fgSecondary, size: 10),
+        ],
+      ),
     );
   }
 }

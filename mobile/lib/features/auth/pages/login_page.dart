@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -8,6 +9,8 @@ import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/void_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../data/i_auth_repository.dart';
+import '_web_redirect_stub.dart'
+    if (dart.library.html) '_web_redirect.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -70,6 +73,17 @@ class LoginPage extends StatelessWidget {
   }
 
   Future<void> _startGoogleLogin(BuildContext context) async {
+    if (kIsWeb) {
+      // On web, redirect the entire browser window to the OAuth flow.
+      // The backend will redirect back to /#/auth-callback?token=JWT.
+      final origin = getWebOrigin();
+      final webCallback = Uri.encodeComponent('$origin/#/auth-callback');
+      redirectBrowser(
+          '${ApiClient.baseUrl}/auth/login/google?webCallback=$webCallback');
+      return;
+    }
+
+    // Mobile: show in-app WebView dialog.
     final callbackUrl = await showDialog<String>(
       context: context,
       barrierDismissible: false,

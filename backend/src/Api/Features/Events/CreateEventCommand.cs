@@ -1,7 +1,6 @@
 using Domain;
 using Domain.Entities;
 using FluentValidation;
-using Infrastructure.Ai;
 using Infrastructure.Cache;
 using Infrastructure.Persistence;
 using MediatR;
@@ -29,24 +28,11 @@ public class CreateEventCommandValidator : AbstractValidator<CreateEventCommand>
 
 public class CreateEventCommandHandler(
     AppDbContext db,
-    IAnthropicClient ai,
     IRedisCacheService cache) : IRequestHandler<CreateEventCommand, EventResponse>
 {
     public async Task<EventResponse> Handle(CreateEventCommand request, CancellationToken ct)
     {
         var req = request.Request;
-
-        ModerationResult moderation;
-        try
-        {
-            moderation = await ai.ModerateContentAsync($"{req.Title} {req.Description}", ct);
-        }
-        catch
-        {
-            moderation = new ModerationResult(true, null); // fail open — local service never rejects
-        }
-        if (!moderation.IsAllowed)
-            throw new ContentRejectedException(moderation.Reason ?? "Content rejected by moderation");
 
         var actionType = Enum.Parse<ActionType>(req.ActionType, ignoreCase: true);
         var interventionLevel = Enum.Parse<InterventionLevel>(req.InterventionLevel, ignoreCase: true);
@@ -83,4 +69,3 @@ public class CreateEventCommandHandler(
     }
 }
 
-public class ContentRejectedException(string message) : Exception(message);

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../shared/models/event_model.dart';
+import '../../../shared/models/mission_model.dart';
 import '../../../shared/models/profile_model.dart';
 import '../data/i_profile_repository.dart';
 
@@ -34,10 +36,14 @@ class ProfileLoaded extends ProfileState {
   final List<ActivityLogItem> activityItems;
   final String? nextCursor;
   final bool isLoadingMore;
+  final List<EventModel> createdEvents;
+  final List<MissionModel> createdMissions;
 
   ProfileLoaded({
     required this.profile,
     required this.activityItems,
+    required this.createdEvents,
+    required this.createdMissions,
     this.nextCursor,
     this.isLoadingMore = false,
   });
@@ -51,13 +57,16 @@ class ProfileLoaded extends ProfileState {
     return ProfileLoaded(
       profile: profile,
       activityItems: activityItems ?? this.activityItems,
+      createdEvents: createdEvents,
+      createdMissions: createdMissions,
       nextCursor: clearCursor ? null : nextCursor ?? this.nextCursor,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
   @override
-  List<Object?> get props => [profile, activityItems, nextCursor, isLoadingMore];
+  List<Object?> get props =>
+      [profile, activityItems, createdEvents, createdMissions, nextCursor, isLoadingMore];
 }
 
 class ProfileError extends ProfileState {
@@ -84,12 +93,18 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     try {
-      final profile = await _repository.getProfile();
-      final activityPage = await _repository.getActivityLog();
+      final results = await Future.wait([
+        _repository.getProfile(),
+        _repository.getActivityLog(),
+        _repository.getCreatedEvents(),
+        _repository.getCreatedMissions(),
+      ]);
       emit(ProfileLoaded(
-        profile: profile,
-        activityItems: activityPage.items,
-        nextCursor: activityPage.nextCursor,
+        profile: results[0] as ProfileModel,
+        activityItems: (results[1] as ActivityLogPage).items,
+        nextCursor: (results[1] as ActivityLogPage).nextCursor,
+        createdEvents: results[2] as List<EventModel>,
+        createdMissions: results[3] as List<MissionModel>,
       ));
     } catch (e) {
       emit(ProfileError(e.toString()));

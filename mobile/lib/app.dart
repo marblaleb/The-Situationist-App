@@ -13,12 +13,17 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/i_auth_repository.dart';
+import 'features/auth/pages/auth_callback_page.dart';
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/splash_page.dart';
+import 'features/deriva/bloc/deriva_bloc.dart';
+import 'features/deriva/data/deriva_repository.dart';
 import 'features/deriva/pages/deriva_active_page.dart';
 import 'features/deriva/pages/deriva_home_page.dart';
 import 'features/events/pages/create_event_page.dart';
+import 'features/events/pages/create_hub_page.dart';
 import 'features/map/pages/map_page.dart';
+import 'features/missions/pages/create_mission_page.dart';
 import 'features/missions/pages/mission_active_page.dart';
 import 'features/missions/pages/mission_detail_page.dart';
 import 'features/missions/pages/missions_page.dart';
@@ -39,6 +44,7 @@ class _SituationistAppState extends State<SituationistApp> {
   late final LocationService _locationService;
   late final SignalRService _signalRService;
   late final AuthBloc _authBloc;
+  late final DerivaBloc _derivaBloc;
   late final GoRouter _router;
 
   @override
@@ -54,6 +60,7 @@ class _SituationistAppState extends State<SituationistApp> {
     _locationService = LocationService();
     _signalRService = SignalRService(_authService);
     _authBloc = AuthBloc(repository: _authRepository);
+    _derivaBloc = DerivaBloc(repository: DerivaRepository(_apiClient));
 
     _router = GoRouter(
       initialLocation: '/',
@@ -62,6 +69,12 @@ class _SituationistAppState extends State<SituationistApp> {
       routes: [
         GoRoute(path: '/', builder: (_, __) => const SplashPage()),
         GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
+        GoRoute(
+          path: '/auth-callback',
+          builder: (_, state) => AuthCallbackPage(
+            token: state.uri.queryParameters['token'],
+          ),
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, shell) => _ShellScaffold(shell: shell),
           branches: [
@@ -96,10 +109,13 @@ class _SituationistAppState extends State<SituationistApp> {
             StatefulShellBranch(routes: [
               GoRoute(
                 path: '/home/create',
-                builder: (_, __) => CreateEventPage(
-                  locationService: _locationService,
-                  apiClient: _apiClient,
-                ),
+                builder: (_, __) => const CreateHubPage(),
+              ),
+            ]),
+            StatefulShellBranch(routes: [
+              GoRoute(
+                path: '/home/profile',
+                builder: (_, __) => ProfilePage(apiClient: _apiClient),
               ),
             ]),
           ],
@@ -120,6 +136,20 @@ class _SituationistAppState extends State<SituationistApp> {
           ),
         ),
         GoRoute(
+          path: '/home/create-event',
+          builder: (_, __) => CreateEventPage(
+            locationService: _locationService,
+            apiClient: _apiClient,
+          ),
+        ),
+        GoRoute(
+          path: '/home/create-mission',
+          builder: (_, __) => CreateMissionPage(
+            locationService: _locationService,
+            apiClient: _apiClient,
+          ),
+        ),
+        GoRoute(
           path: '/home/missions/:id',
           builder: (_, state) => MissionDetailPage(
             missionId: state.pathParameters['id']!,
@@ -133,10 +163,6 @@ class _SituationistAppState extends State<SituationistApp> {
             apiClient: _apiClient,
           ),
         ),
-        GoRoute(
-          path: '/profile',
-          builder: (_, __) => ProfilePage(apiClient: _apiClient),
-        ),
       ],
     );
   }
@@ -144,6 +170,7 @@ class _SituationistAppState extends State<SituationistApp> {
   @override
   void dispose() {
     _authBloc.close();
+    _derivaBloc.close();
     _signalRService.dispose();
     super.dispose();
   }
@@ -157,8 +184,11 @@ class _SituationistAppState extends State<SituationistApp> {
         RepositoryProvider<LocationService>.value(value: _locationService),
         RepositoryProvider<SignalRService>.value(value: _signalRService),
       ],
-      child: BlocProvider.value(
-        value: _authBloc,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _authBloc),
+          BlocProvider.value(value: _derivaBloc),
+        ],
         child: MaterialApp.router(
           title: 'Situationist',
           theme: buildAppTheme(),
@@ -167,6 +197,7 @@ class _SituationistAppState extends State<SituationistApp> {
         ),
       ),
     );
+
   }
 }
 
@@ -194,7 +225,7 @@ class _VoidBottomNav extends StatelessWidget {
 
   const _VoidBottomNav({required this.currentIndex, required this.onTap});
 
-  static const _icons = ['⌀', '↺', '◈', '⊕'];
+  static const _icons = ['⌀', '↺', '◈', '⊕', '◉'];
 
   @override
   Widget build(BuildContext context) {
