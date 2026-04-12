@@ -4,6 +4,7 @@ using FluentValidation;
 using Infrastructure.Cache;
 using Infrastructure.Persistence;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NetTopologySuite.Geometries;
 using NGeoHash;
@@ -32,6 +33,12 @@ public class CreateEventCommandHandler(
 {
     public async Task<EventResponse> Handle(CreateEventCommand request, CancellationToken ct)
     {
+        var todayUtc = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.Zero);
+        var eventsToday = await db.Events.CountAsync(
+            e => e.CreatorId == request.CreatorId && e.CreatedAt >= todayUtc, ct);
+        if (eventsToday >= 2)
+            throw new InvalidOperationException("Daily event creation limit reached");
+
         var req = request.Request;
 
         var actionType = Enum.Parse<ActionType>(req.ActionType, ignoreCase: true);

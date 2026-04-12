@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -20,8 +21,15 @@ public static class EventEndpoints
         group.MapPost("/", async (CreateEventRequest req, ClaimsPrincipal principal, ISender mediator) =>
         {
             var userId = Guid.Parse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-            var result = await mediator.Send(new CreateEventCommand(userId, req));
-            return Results.Created($"/events/{result.Id}", result);
+            try
+            {
+                var result = await mediator.Send(new CreateEventCommand(userId, req));
+                return Results.Created($"/events/{result.Id}", result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(new { error = ex.Message });
+            }
         });
 
         group.MapPost("/generate", async (GenerateEventRequest req, ISender mediator) =>
@@ -72,6 +80,10 @@ public static class EventEndpoints
             catch (KeyNotFoundException)
             {
                 return Results.NotFound();
+            }
+            catch (DbUpdateException)
+            {
+                return Results.Problem("Database error while saving participation.", statusCode: 500);
             }
         });
 
