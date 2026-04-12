@@ -47,6 +47,13 @@ public static class ProfileEndpoints
             return Results.Ok(result);
         });
 
+        group.MapGet("/me/creation-limits", async (ClaimsPrincipal principal, ISender mediator) =>
+        {
+            var userId = Guid.Parse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+            var result = await mediator.Send(new GetCreationLimitsQuery(userId));
+            return Results.Ok(result);
+        });
+
         return app;
     }
 }
