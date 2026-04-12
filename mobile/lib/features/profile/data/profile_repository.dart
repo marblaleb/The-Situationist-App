@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../shared/models/creation_limits_model.dart';
 import '../../../shared/models/event_model.dart';
 import '../../../shared/models/mission_model.dart';
 import '../../../shared/models/profile_model.dart';
@@ -45,5 +46,12 @@ class ProfileRepository implements IProfileRepository {
     return (response.data as List)
         .map((e) => MissionModel.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<CreationLimitsModel> getCreationLimits() async {
+    final response =
+        await _client.get<Map<String, dynamic>>('/profile/me/creation-limits');
+    return CreationLimitsModel.fromJson(response.data!);
   }
 }
