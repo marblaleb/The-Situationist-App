@@ -17,8 +17,15 @@ public static class MissionEndpoints
         group.MapPost("/", async (CreateMissionRequest req, ClaimsPrincipal principal, ISender mediator) =>
         {
             var userId = Guid.Parse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-            var result = await mediator.Send(new CreateMissionCommand(userId, req));
-            return Results.Created($"/missions/{result.Id}", result);
+            try
+            {
+                var result = await mediator.Send(new CreateMissionCommand(userId, req));
+                return Results.Created($"/missions/{result.Id}", result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(new { error = ex.Message });
+            }
         });
 
         group.MapGet("/", async (

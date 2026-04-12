@@ -4,6 +4,7 @@ using FluentValidation;
 using Infrastructure.Cache;
 using Infrastructure.Persistence;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using NGeoHash;
 
@@ -32,6 +33,12 @@ public class CreateMissionCommandHandler(
 {
     public async Task<MissionSummaryResponse> Handle(CreateMissionCommand request, CancellationToken ct)
     {
+        var todayUtc = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.Zero);
+        var missionsToday = await db.Missions.CountAsync(
+            m => m.CreatorId == request.CreatorId && m.CreatedAt >= todayUtc, ct);
+        if (missionsToday >= 2)
+            throw new InvalidOperationException("Daily mission creation limit reached");
+
         var req = request.Request;
         var location = new Point(req.Longitude, req.Latitude) { SRID = 4326 };
 
