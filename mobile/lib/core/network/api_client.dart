@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../auth/auth_service.dart';
 import 'api_exception.dart';
 
 class ApiClient {
@@ -9,16 +9,16 @@ class ApiClient {
   );
 
   late final Dio _dio;
-  final FlutterSecureStorage _storage;
+  final AuthService _authService;
 
-  ApiClient(this._storage) {
+  ApiClient(this._authService) {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},
     ));
-    _dio.interceptors.add(_AuthInterceptor(_storage));
+    _dio.interceptors.add(_AuthInterceptor(_authService));
   }
 
   Future<Response<T>> get<T>(
@@ -58,16 +58,16 @@ class ApiClient {
 }
 
 class _AuthInterceptor extends Interceptor {
-  final FlutterSecureStorage _storage;
+  final AuthService _authService;
 
-  _AuthInterceptor(this._storage);
+  _AuthInterceptor(this._authService);
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _storage.read(key: 'jwt');
+    final token = await _authService.getToken();
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }

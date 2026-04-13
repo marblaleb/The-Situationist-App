@@ -53,7 +53,7 @@ class _SituationistAppState extends State<SituationistApp> {
     super.initState();
     _storage = const FlutterSecureStorage();
     _authService = AuthService(_storage);
-    _apiClient = ApiClient(_storage);
+    _apiClient = ApiClient(_authService);
     _authRepository = AuthRepository(
       authService: _authService,
       apiClient: _apiClient,
