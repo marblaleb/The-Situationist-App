@@ -109,7 +109,7 @@ class _SituationistAppState extends State<SituationistApp> {
             StatefulShellBranch(routes: [
               GoRoute(
                 path: '/home/create',
-                builder: (_, __) => const CreateHubPage(),
+                builder: (_, __) => CreateHubPage(apiClient: _apiClient),
               ),
             ]),
             StatefulShellBranch(routes: [
