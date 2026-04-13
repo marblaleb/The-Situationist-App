@@ -39,6 +39,7 @@ class _AuthCallbackPageState extends State<AuthCallbackPage> {
       listener: (context, state) {
         if (state is AuthAuthenticated) context.go('/home/map');
         if (state is AuthUnauthenticated) context.go('/login');
+        if (state is AuthError) context.go('/login');
       },
       child: Scaffold(
         backgroundColor: AppColors.bgVoid,

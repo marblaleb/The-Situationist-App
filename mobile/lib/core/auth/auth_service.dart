@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '_web_storage_stub.dart'
+    if (dart.library.html) '_web_storage.dart';
 
 class AuthService {
   static const _jwtKey = 'jwt';
@@ -7,12 +10,26 @@ class AuthService {
 
   AuthService(this._storage);
 
-  Future<String?> getToken() => _storage.read(key: _jwtKey);
+  Future<String?> getToken() async {
+    if (kIsWeb) return webReadToken(_jwtKey);
+    return _storage.read(key: _jwtKey);
+  }
 
-  Future<void> saveToken(String token) =>
-      _storage.write(key: _jwtKey, value: token);
+  Future<void> saveToken(String token) async {
+    if (kIsWeb) {
+      webWriteToken(_jwtKey, token);
+      return;
+    }
+    await _storage.write(key: _jwtKey, value: token);
+  }
 
-  Future<void> clearAll() => _storage.deleteAll();
+  Future<void> clearAll() async {
+    if (kIsWeb) {
+      webClearToken(_jwtKey);
+      return;
+    }
+    await _storage.deleteAll();
+  }
 
   Future<bool> isAuthenticated() async {
     final token = await getToken();
