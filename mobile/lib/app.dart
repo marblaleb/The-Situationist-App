@@ -146,7 +146,6 @@ class _SituationistAppState extends State<SituationistApp> {
         GoRoute(
           path: '/home/create-mission',
           builder: (_, __) => CreateMissionPage(
-            locationService: _locationService,
             apiClient: _apiClient,
           ),
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/location/location_service.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -11,28 +11,21 @@ import '../bloc/create_mission_bloc.dart';
 import '../data/missions_repository.dart';
 
 class CreateMissionPage extends StatelessWidget {
-  final LocationService locationService;
   final ApiClient apiClient;
 
-  const CreateMissionPage({
-    super.key,
-    required this.locationService,
-    required this.apiClient,
-  });
+  const CreateMissionPage({super.key, required this.apiClient});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => CreateMissionBloc(repository: MissionsRepository(apiClient)),
-      child: _CreateMissionView(locationService: locationService),
+      child: const _CreateMissionView(),
     );
   }
 }
 
 class _CreateMissionView extends StatefulWidget {
-  final LocationService locationService;
-
-  const _CreateMissionView({required this.locationService});
+  const _CreateMissionView();
 
   @override
   State<_CreateMissionView> createState() => _CreateMissionViewState();
@@ -43,6 +36,7 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
   final _descCtrl = TextEditingController();
   int _radiusMeters = 500;
   final List<_ClueEntry> _clues = [_ClueEntry()];
+  LatLng? _pickedLocation;
 
   static const _radii = [100, 250, 500, 1000, 2000];
   static const _clueTypes = ['Textual', 'Sensorial', 'Contextual'];
@@ -53,6 +47,37 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
     _descCtrl.dispose();
     for (final c in _clues) c.dispose();
     super.dispose();
+  }
+
+  Future<void> _openLocationPicker() async {
+    final result = await context.push<LatLng>('/home/location-picker');
+    if (result != null && mounted) {
+      setState(() => _pickedLocation = result);
+    }
+  }
+
+  void _submit() {
+    if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) return;
+    if (_pickedLocation == null) return;
+    if (_clues.any((c) =>
+        c.contentCtrl.text.isEmpty || c.answerCtrl.text.isEmpty)) return;
+
+    context.read<CreateMissionBloc>().add(CreateMissionSubmitted(
+      title: _titleCtrl.text.trim(),
+      description: _descCtrl.text.trim(),
+      latitude: _pickedLocation!.latitude,
+      longitude: _pickedLocation!.longitude,
+      radiusMeters: _radiusMeters,
+      clues: _clues
+          .map((c) => ClueFormData(
+                type: c.selectedType,
+                content: c.contentCtrl.text.trim(),
+                answer: c.answerCtrl.text.trim(),
+                hint: c.hintCtrl.text.trim(),
+                isOptional: c.isOptional,
+              ))
+          .toList(),
+    ));
   }
 
   @override
@@ -68,15 +93,19 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                MonoText('NUEVA MISIÓN', color: AppColors.fgPrimary, size: 18, letterSpacing: 4),
+                MonoText('NUEVA MISIÓN',
+                    color: AppColors.fgPrimary, size: 18, letterSpacing: 4),
                 const SizedBox(height: 4),
                 Container(height: 1, color: AppColors.fgMuted),
                 const SizedBox(height: 24),
-                _Field(label: 'TÍTULO', child: _textInput(_titleCtrl, 'nombre de la misión')),
+                _Field(
+                    label: 'TÍTULO',
+                    child: _textInput(_titleCtrl, 'nombre de la misión')),
                 const SizedBox(height: 16),
                 _Field(
                   label: 'DESCRIPCIÓN',
-                  child: _textInput(_descCtrl, 'descripción de la misión', maxLines: 3),
+                  child: _textInput(_descCtrl, 'descripción de la misión',
+                      maxLines: 3),
                 ),
                 const SizedBox(height: 16),
                 _Field(
@@ -84,7 +113,38 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
                   child: _Selector(
                     options: _radii.map((r) => r.toString()).toList(),
                     selected: _radiusMeters.toString(),
-                    onSelect: (v) => setState(() => _radiusMeters = int.parse(v)),
+                    onSelect: (v) =>
+                        setState(() => _radiusMeters = int.parse(v)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _Field(
+                  label: 'UBICACIÓN',
+                  child: GestureDetector(
+                    onTap: _openLocationPicker,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _pickedLocation != null
+                              ? AppColors.phosphor
+                              : AppColors.fgMuted,
+                          width: 1,
+                        ),
+                      ),
+                      child: MonoText(
+                        _pickedLocation != null
+                            ? 'LAT ${_pickedLocation!.latitude.toStringAsFixed(5)}'
+                                '  LNG ${_pickedLocation!.longitude.toStringAsFixed(5)}'
+                            : 'TOCA PARA ELEGIR EN EL MAPA →',
+                        color: _pickedLocation != null
+                            ? AppColors.phosphor
+                            : AppColors.fgMuted,
+                        size: 11,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -96,7 +156,8 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
                     Text('PISTAS', style: AppTextStyles.monoDisplay),
                     GestureDetector(
                       onTap: () => setState(() => _clues.add(_ClueEntry())),
-                      child: MonoText('+ AÑADIR', color: AppColors.phosphor, size: 12),
+                      child: MonoText('+ AÑADIR',
+                          color: AppColors.phosphor, size: 12),
                     ),
                   ],
                 ),
@@ -122,8 +183,13 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
                 ],
                 const SizedBox(height: 16),
                 VoidButton(
-                  label: state is CreateMissionSubmitting ? 'CREANDO...' : 'CREAR MISIÓN',
-                  onPressed: state is CreateMissionSubmitting ? null : _submit,
+                  label: state is CreateMissionSubmitting
+                      ? 'CREANDO...'
+                      : 'CREAR MISIÓN',
+                  onPressed: (state is CreateMissionSubmitting ||
+                          _pickedLocation == null)
+                      ? null
+                      : _submit,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -134,32 +200,8 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
     );
   }
 
-  void _submit() async {
-    if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) return;
-    if (_clues.any((c) => c.contentCtrl.text.isEmpty || c.answerCtrl.text.isEmpty)) return;
-
-    final (lat, lng) = await widget.locationService.getCurrentPosition();
-    if (!mounted) return;
-
-    context.read<CreateMissionBloc>().add(CreateMissionSubmitted(
-      title: _titleCtrl.text.trim(),
-      description: _descCtrl.text.trim(),
-      latitude: lat,
-      longitude: lng,
-      radiusMeters: _radiusMeters,
-      clues: _clues
-          .map((c) => ClueFormData(
-                type: c.selectedType,
-                content: c.contentCtrl.text.trim(),
-                answer: c.answerCtrl.text.trim(),
-                hint: c.hintCtrl.text.trim(),
-                isOptional: c.isOptional,
-              ))
-          .toList(),
-    ));
-  }
-
-  Widget _textInput(TextEditingController ctrl, String hint, {int maxLines = 1}) {
+  Widget _textInput(TextEditingController ctrl, String hint,
+      {int maxLines = 1}) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,
@@ -209,18 +251,21 @@ class _ClueForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.fgMuted, width: 1)),
+      decoration:
+          BoxDecoration(border: Border.all(color: AppColors.fgMuted, width: 1)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              MonoText('PISTA ${index + 1}', color: AppColors.fgSecondary, size: 10, letterSpacing: 2),
+              MonoText('PISTA ${index + 1}',
+                  color: AppColors.fgSecondary, size: 10, letterSpacing: 2),
               if (canRemove)
                 GestureDetector(
                   onTap: onRemove,
-                  child: MonoText('ELIMINAR', color: AppColors.danger, size: 10),
+                  child:
+                      MonoText('ELIMINAR', color: AppColors.danger, size: 10),
                 ),
             ],
           ),
@@ -286,15 +331,18 @@ class _ClueForm extends StatelessWidget {
                   height: 14,
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: entry.isOptional ? AppColors.phosphor : AppColors.fgMuted,
+                      color: entry.isOptional
+                          ? AppColors.phosphor
+                          : AppColors.fgMuted,
                     ),
                     color: entry.isOptional
-                        ? AppColors.phosphor.withOpacity(0.15)
+                        ? AppColors.phosphor.withValues(alpha: 0.15)
                         : Colors.transparent,
                   ),
                 ),
                 const SizedBox(width: 8),
-                MonoText('PISTA OPCIONAL', color: AppColors.fgSecondary, size: 10),
+                MonoText('PISTA OPCIONAL',
+                    color: AppColors.fgSecondary, size: 10),
               ],
             ),
           ),
@@ -317,7 +365,8 @@ class _Field extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        MonoText(label, color: AppColors.fgSecondary, size: 10, letterSpacing: 2),
+        MonoText(label,
+            color: AppColors.fgSecondary, size: 10, letterSpacing: 2),
         const SizedBox(height: 6),
         child,
       ],
@@ -330,7 +379,8 @@ class _Selector extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onSelect;
 
-  const _Selector({required this.options, required this.selected, required this.onSelect});
+  const _Selector(
+      {required this.options, required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -344,8 +394,11 @@ class _Selector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.phosphor.withOpacity(0.1) : Colors.transparent,
-              border: Border.all(color: isSelected ? AppColors.phosphor : AppColors.fgMuted),
+              color: isSelected
+                  ? AppColors.phosphor.withValues(alpha: 0.1)
+                  : Colors.transparent,
+              border: Border.all(
+                  color: isSelected ? AppColors.phosphor : AppColors.fgMuted),
             ),
             child: MonoText(
               opt.toUpperCase(),
