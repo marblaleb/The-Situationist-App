@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/location/location_service.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/realtime/signalr_service.dart';
@@ -10,6 +11,7 @@ import '../../../features/events/bloc/events_bloc.dart';
 import '../../../features/events/data/events_repository.dart';
 import '../../../shared/models/event_model.dart';
 import '../bloc/map_bloc.dart';
+import '../widgets/cluster_list_sheet.dart';
 import '../widgets/event_detail_sheet.dart';
 
 class MapPage extends StatelessWidget {
@@ -111,10 +113,6 @@ class _MapReady extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedEvent = state.selectedEventId != null
-        ? state.events.where((e) => e.id == state.selectedEventId).firstOrNull
-        : null;
-
     return Scaffold(
       backgroundColor: AppColors.bgVoid,
       body: Stack(
@@ -124,8 +122,10 @@ class _MapReady extends StatelessWidget {
               initialCenter: LatLng(state.lat, state.lng),
               initialZoom: 15,
               backgroundColor: AppColors.bgVoid,
-              onTap: (_, __) =>
-                  context.read<MapBloc>().add(MapEventSelected(null)),
+              onTap: (_, __) {
+                context.read<MapBloc>().add(MapEventSelected(null));
+                context.read<MapBloc>().add(MapClusterSelected(null));
+              },
             ),
             children: [
               TileLayer(
@@ -134,40 +134,110 @@ class _MapReady extends StatelessWidget {
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.situationist.app',
               ),
-              MarkerLayer(
-                markers: state.events.map((event) {
+              CircleLayer(
+                circles: state.events.map((event) {
                   final isSelected = event.id == state.selectedEventId;
                   final color = _markerColor(event);
-                  final size = isSelected ? 20.0 : 14.0;
-                  return Marker(
+                  return CircleMarker(
                     point: LatLng(event.centroidLatitude, event.centroidLongitude),
-                    width: size,
-                    height: size,
-                    child: GestureDetector(
-                      onTap: () => context
-                          .read<MapBloc>()
-                          .add(MapEventSelected(event.id)),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: color.withOpacity(isSelected ? 0.9 : 0.6),
-                          border: Border.all(color: color, width: 1),
+                    radius: event.radiusMeters.toDouble(),
+                    useRadiusInMeter: true,
+                    color: color.withOpacity(isSelected ? 0.1 : 0.05),
+                    borderColor: color.withOpacity(isSelected ? 0.7 : 0.4),
+                    borderStrokeWidth: 1,
+                  );
+                }).toList(),
+              ),
+              MarkerLayer(
+                markers: state.clusters.map((cluster) {
+                  final isSelected = cluster.isSingle
+                      ? state.selectedEventId == cluster.single.id
+                      : state.selectedCluster == cluster;
+
+                  if (cluster.isSingle) {
+                    final event = cluster.single;
+                    final color = _markerColor(event);
+                    final size = isSelected ? 20.0 : 14.0;
+                    return Marker(
+                      point: LatLng(cluster.lat, cluster.lng),
+                      width: size,
+                      height: size,
+                      child: GestureDetector(
+                        onTap: () => context
+                            .read<MapBloc>()
+                            .add(MapEventSelected(event.id)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: color.withOpacity(isSelected ? 0.9 : 0.6),
+                            border: Border.all(color: color, width: 1),
+                          ),
                         ),
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    final size = isSelected ? 32.0 : 26.0;
+                    return Marker(
+                      point: LatLng(cluster.lat, cluster.lng),
+                      width: size,
+                      height: size,
+                      child: GestureDetector(
+                        onTap: () => context
+                            .read<MapBloc>()
+                            .add(MapClusterSelected(cluster)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.bgVoid,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.phosphor
+                                  .withOpacity(isSelected ? 0.9 : 0.6),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              cluster.events.length.toString(),
+                              style: AppTextStyles.body.copyWith(
+                                fontSize: 11,
+                                color: AppColors.phosphor
+                                    .withOpacity(isSelected ? 0.9 : 0.6),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                 }).toList(),
               ),
             ],
           ),
-          if (selectedEvent != null)
+          if (state.selectedCluster != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: ClusterListSheet(
+                cluster: state.selectedCluster!,
+                onDismiss: () =>
+                    context.read<MapBloc>().add(MapClusterSelected(null)),
+                onEventSelected: (event) {
+                  context.read<MapBloc>()
+                    ..add(MapClusterSelected(null))
+                    ..add(MapEventSelected(event.id));
+                },
+              ),
+            ),
+          if (state.selectedEvent != null)
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               height: MediaQuery.of(context).size.height * 0.7,
               child: EventDetailSheet(
-                event: selectedEvent,
+                event: state.selectedEvent!,
                 onDismiss: () =>
                     context.read<MapBloc>().add(MapEventSelected(null)),
               ),

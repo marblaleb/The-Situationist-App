@@ -27,6 +27,8 @@ class CreateEventSubmitted extends CreateEventEvent {
   final String interventionLevel;
   final String visibility;
   final int durationMinutes;
+  final double latitude;
+  final double longitude;
 
   CreateEventSubmitted({
     required this.title,
@@ -35,11 +37,21 @@ class CreateEventSubmitted extends CreateEventEvent {
     required this.interventionLevel,
     required this.visibility,
     required this.durationMinutes,
+    required this.latitude,
+    required this.longitude,
   });
 
   @override
-  List<Object?> get props =>
-      [title, description, actionType, interventionLevel, visibility, durationMinutes];
+  List<Object?> get props => [
+        title,
+        description,
+        actionType,
+        interventionLevel,
+        visibility,
+        durationMinutes,
+        latitude,
+        longitude,
+      ];
 }
 
 // States
@@ -129,15 +141,14 @@ class CreateEventBloc extends Bloc<CreateEventEvent, CreateEventState> {
   ) async {
     emit(CreateEventSubmitting());
     try {
-      final (lat, lng) = await _locationService.getCurrentPosition();
       final created = await _repository.createEvent(
         CreateEventRequest(
           title: event.title,
           description: event.description,
           actionType: event.actionType,
           interventionLevel: event.interventionLevel,
-          latitude: lat,
-          longitude: lng,
+          latitude: event.latitude,
+          longitude: event.longitude,
           radiusMeters: 200,
           visibility: event.visibility,
           startsAt: DateTime.now().toUtc(),

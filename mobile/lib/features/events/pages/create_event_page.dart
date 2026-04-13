@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/mono_text.dart';
@@ -46,6 +48,7 @@ class _CreateEventViewState extends State<_CreateEventView> {
   String _interventionLevel = 'Bajo';
   String _visibility = 'Public';
   int _durationMinutes = 60;
+  LatLng? _pickedLocation;
 
   static const _actionTypes = ['Performativa', 'Social', 'Sensorial', 'Poetica'];
   static const _interventionLevels = ['Bajo', 'Medio', 'Alto'];
@@ -57,6 +60,13 @@ class _CreateEventViewState extends State<_CreateEventView> {
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _openLocationPicker() async {
+    final result = await context.push<LatLng>('/home/location-picker');
+    if (result != null && mounted) {
+      setState(() => _pickedLocation = result);
+    }
   }
 
   @override
@@ -162,15 +172,47 @@ class _CreateEventViewState extends State<_CreateEventView> {
                     onSelect: (v) => setState(() => _durationMinutes = int.parse(v)),
                   ),
                 ),
+                const SizedBox(height: 16),
+                _Field(
+                  label: 'UBICACIÓN',
+                  child: GestureDetector(
+                    onTap: _openLocationPicker,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _pickedLocation != null
+                              ? AppColors.phosphor
+                              : AppColors.fgMuted,
+                          width: 1,
+                        ),
+                      ),
+                      child: MonoText(
+                        _pickedLocation != null
+                            ? 'LAT ${_pickedLocation!.latitude.toStringAsFixed(5)}'
+                                '  LNG ${_pickedLocation!.longitude.toStringAsFixed(5)}'
+                            : 'TOCA PARA ELEGIR EN EL MAPA →',
+                        color: _pickedLocation != null
+                            ? AppColors.phosphor
+                            : AppColors.fgMuted,
+                        size: 11,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 32),
                 VoidButton(
-                  label: state is CreateEventSubmitting ? 'CREANDO...' : 'CREAR EVENTO',
-                  onPressed: state is CreateEventSubmitting
+                  label: state is CreateEventSubmitting
+                      ? 'CREANDO...'
+                      : 'CREAR EVENTO',
+                  onPressed: (state is CreateEventSubmitting ||
+                          _pickedLocation == null)
                       ? null
                       : () {
-                          if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) {
-                            return;
-                          }
+                          if (_titleCtrl.text.isEmpty ||
+                              _descCtrl.text.isEmpty) return;
                           context.read<CreateEventBloc>().add(
                                 CreateEventSubmitted(
                                   title: _titleCtrl.text.trim(),
@@ -179,6 +221,8 @@ class _CreateEventViewState extends State<_CreateEventView> {
                                   interventionLevel: _interventionLevel,
                                   visibility: _visibility,
                                   durationMinutes: _durationMinutes,
+                                  latitude: _pickedLocation!.latitude,
+                                  longitude: _pickedLocation!.longitude,
                                 ),
                               );
                         },
@@ -192,7 +236,8 @@ class _CreateEventViewState extends State<_CreateEventView> {
     );
   }
 
-  Widget _textInput(TextEditingController ctrl, String hint, {int maxLines = 1}) {
+  Widget _textInput(TextEditingController ctrl, String hint,
+      {int maxLines = 1}) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,
@@ -246,7 +291,9 @@ class _Selector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.phosphor.withOpacity(0.1) : Colors.transparent,
+              color: isSelected
+                  ? AppColors.phosphor.withValues(alpha: 0.1)
+                  : Colors.transparent,
               border: Border.all(
                 color: isSelected ? AppColors.phosphor : AppColors.fgMuted,
                 width: 1,
@@ -275,13 +322,15 @@ class _SuggestionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.phosphor.withOpacity(0.3), width: 1),
+        border: Border.all(
+            color: AppColors.phosphor.withValues(alpha: 0.3), width: 1),
         color: AppColors.bgSurface,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MonoText(suggestion.title.toUpperCase(), color: AppColors.phosphor, size: 12),
+          MonoText(suggestion.title.toUpperCase(),
+              color: AppColors.phosphor, size: 12),
           const SizedBox(height: 6),
           Text(suggestion.description, style: AppTextStyles.body),
           const SizedBox(height: 10),
