@@ -22,6 +22,7 @@ import 'features/deriva/pages/deriva_active_page.dart';
 import 'features/deriva/pages/deriva_home_page.dart';
 import 'features/events/pages/create_event_page.dart';
 import 'features/events/pages/create_hub_page.dart';
+import 'features/map/pages/location_picker_page.dart';
 import 'features/map/pages/map_page.dart';
 import 'features/missions/pages/create_mission_page.dart';
 import 'features/missions/pages/mission_active_page.dart';
@@ -147,6 +148,12 @@ class _SituationistAppState extends State<SituationistApp> {
           builder: (_, __) => CreateMissionPage(
             locationService: _locationService,
             apiClient: _apiClient,
+          ),
+        ),
+        GoRoute(
+          path: '/home/location-picker',
+          builder: (_, __) => LocationPickerPage(
+            locationService: _locationService,
           ),
         ),
         GoRoute(
