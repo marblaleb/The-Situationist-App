@@ -1,4 +1,5 @@
 using Api.Features.Auth;
+using Api.Features.Chat;
 using Api.Features.Deriva;
 using Api.Features.Events;
 using Api.Features.Missions;
@@ -113,11 +114,18 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-// Apply pending migrations on startup
+// Apply pending migrations + seed on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<Infrastructure.Persistence.AppDbContext>();
     await db.Database.MigrateAsync();
+
+    if (app.Environment.IsDevelopment())
+    {
+        var seederLogger = scope.ServiceProvider
+            .GetRequiredService<ILogger<Infrastructure.Persistence.AppDbContext>>();
+        await Infrastructure.Persistence.DataSeeder.SeedAsync(db, seederLogger);
+    }
 }
 
 if (!app.Environment.IsDevelopment())
@@ -134,6 +142,7 @@ app.MapEventEndpoints();
 app.MapDerivaEndpoints();
 app.MapMissionEndpoints();
 app.MapProfileEndpoints();
+app.MapChatEndpoints();
 
 // SignalR hub
 app.MapHub<EventHub>("/hubs/events");
