@@ -20,6 +20,7 @@ import 'features/deriva/bloc/deriva_bloc.dart';
 import 'features/deriva/data/deriva_repository.dart';
 import 'features/deriva/pages/deriva_active_page.dart';
 import 'features/deriva/pages/deriva_home_page.dart';
+import 'features/chat/pages/event_chat_page.dart';
 import 'features/events/pages/create_event_page.dart';
 import 'features/events/pages/create_hub_page.dart';
 import 'features/map/pages/location_picker_page.dart';
@@ -125,6 +126,15 @@ class _SituationistAppState extends State<SituationistApp> {
           path: '/home/events/:id',
           builder: (_, state) => MapPage(
             locationService: _locationService,
+            signalRService: _signalRService,
+            apiClient: _apiClient,
+          ),
+        ),
+        GoRoute(
+          path: '/home/events/:id/chat',
+          builder: (_, state) => EventChatPage(
+            eventId: state.pathParameters['id']!,
+            eventTitle: state.extra as String? ?? '',
             signalRService: _signalRService,
             apiClient: _apiClient,
           ),

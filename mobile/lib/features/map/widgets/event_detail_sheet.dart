@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/void_button.dart';
+import '../../../features/auth/bloc/auth_bloc.dart';
 import '../../../features/events/bloc/events_bloc.dart';
 import '../../../shared/extensions/datetime_extensions.dart';
 import '../../../shared/models/event_model.dart';
+import '../bloc/map_bloc.dart';
 
 class EventDetailSheet extends StatelessWidget {
   final EventModel event;
@@ -94,6 +97,22 @@ class EventDetailSheet extends StatelessWidget {
                 final isExpired =
                     event.expiresAt.isBefore(DateTime.now().toUtc());
                 final disabled = isFull || isExpired;
+                final authState = context.watch<AuthBloc>().state;
+                final isCreator = authState is AuthAuthenticated &&
+                    authState.userId == event.creatorId;
+
+                if (isCreator) {
+                  return VoidButton(
+                    label: 'CANCELAR EVENTO',
+                    borderColor: AppColors.danger,
+                    onPressed: () {
+                      context.read<EventsBloc>().add(
+                            EventCancelRequested(eventId: event.id),
+                          );
+                      context.read<MapBloc>().add(MapEventSelected(null));
+                    },
+                  );
+                }
 
                 return Row(
                   children: [
@@ -136,6 +155,15 @@ class EventDetailSheet extends StatelessWidget {
                   }
                   return const SizedBox.shrink();
                 },
+              ),
+              const SizedBox(height: 8),
+              VoidButton(
+                label: 'CHAT',
+                borderColor: AppColors.electricBlue,
+                onPressed: () => context.push(
+                  '/home/events/${event.id}/chat',
+                  extra: event.title,
+                ),
               ),
             ],
           ),
