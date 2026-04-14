@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Clue> Clues => Set<Clue>();
     public DbSet<MissionProgress> MissionProgresses => Set<MissionProgress>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
     private static JsonDocument ParseJson(string v) => JsonDocument.Parse(v);
 
@@ -116,6 +117,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                     v => ParseJson(v));
             e.HasIndex(x => new { x.UserId, x.OccurredAt });
             e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ChatMessage
+        modelBuilder.Entity<ChatMessage>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.EventId, x.SentAt });
+            e.HasOne(x => x.Event).WithMany().HasForeignKey(x => x.EventId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Sender).WithMany().HasForeignKey(x => x.SenderId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
