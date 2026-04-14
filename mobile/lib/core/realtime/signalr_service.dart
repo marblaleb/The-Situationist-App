@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dart_geohash/dart_geohash.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../auth/auth_service.dart';
+import '../../shared/models/chat_message_model.dart';
 
 sealed class SignalREvent {}
 
@@ -13,6 +14,11 @@ class EventExpiredSignal extends SignalREvent {
 class EventFullSignal extends SignalREvent {
   final String eventId;
   EventFullSignal(this.eventId);
+}
+
+class ChatMessageSignal extends SignalREvent {
+  final ChatMessageModel message;
+  ChatMessageSignal(this.message);
 }
 
 class SignalRService {
@@ -52,6 +58,16 @@ class SignalRService {
       if (id != null) _controller.add(EventFullSignal(id));
     });
 
+    _connection!.on('ReceiveMessage', (args) {
+      final data = args?.firstOrNull;
+      if (data == null) return;
+      try {
+        final msg = ChatMessageModel.fromJson(
+            Map<String, dynamic>.from(data as Map));
+        _controller.add(ChatMessageSignal(msg));
+      } catch (_) {}
+    });
+
     await _connection!.start();
   }
 
@@ -61,6 +77,21 @@ class SignalRService {
     if (geohash == _currentZone) return;
     _currentZone = geohash;
     await _connection!.invoke('JoinZone', args: [geohash]);
+  }
+
+  Future<void> joinEvent(String eventId) async {
+    if (_connection?.state != HubConnectionState.Connected) return;
+    await _connection!.invoke('JoinEvent', args: [eventId]);
+  }
+
+  Future<void> leaveEvent(String eventId) async {
+    if (_connection?.state != HubConnectionState.Connected) return;
+    await _connection!.invoke('LeaveEvent', args: [eventId]);
+  }
+
+  Future<void> sendMessage(String eventId, String content) async {
+    if (_connection?.state != HubConnectionState.Connected) return;
+    await _connection!.invoke('SendMessage', args: [eventId, content]);
   }
 
   Future<void> disconnect() async {
