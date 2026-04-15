@@ -58,7 +58,7 @@ class ClusterListSheet extends StatelessWidget {
                 controller: scrollCtrl,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: cluster.events.length,
-                separatorBuilder: (_, __) => Container(height: 1, color: AppColors.fgMuted.withOpacity(0.3)),
+                separatorBuilder: (_, __) => Container(height: 1, color: AppColors.fgMuted.withValues(alpha:0.3)),
                 itemBuilder: (_, i) {
                   final event = cluster.events[i];
                   return _EventRow(event: event, onTap: () => onEventSelected(event));

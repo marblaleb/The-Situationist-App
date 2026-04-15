@@ -45,7 +45,9 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
-    for (final c in _clues) c.dispose();
+    for (final c in _clues) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -60,7 +62,9 @@ class _CreateMissionViewState extends State<_CreateMissionView> {
     if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) return;
     if (_pickedLocation == null) return;
     if (_clues.any((c) =>
-        c.contentCtrl.text.isEmpty || c.answerCtrl.text.isEmpty)) return;
+        c.contentCtrl.text.isEmpty || c.answerCtrl.text.isEmpty)) {
+      return;
+    }
 
     context.read<CreateMissionBloc>().add(CreateMissionSubmitted(
       title: _titleCtrl.text.trim(),

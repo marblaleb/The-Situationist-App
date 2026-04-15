@@ -212,7 +212,9 @@ class _CreateEventViewState extends State<_CreateEventView> {
                       ? null
                       : () {
                           if (_titleCtrl.text.isEmpty ||
-                              _descCtrl.text.isEmpty) return;
+                              _descCtrl.text.isEmpty) {
+                            return;
+                          }
                           context.read<CreateEventBloc>().add(
                                 CreateEventSubmitted(
                                   title: _titleCtrl.text.trim(),

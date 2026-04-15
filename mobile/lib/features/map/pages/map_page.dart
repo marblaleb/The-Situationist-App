@@ -142,8 +142,8 @@ class _MapReady extends StatelessWidget {
                     point: LatLng(event.centroidLatitude, event.centroidLongitude),
                     radius: event.radiusMeters.toDouble(),
                     useRadiusInMeter: true,
-                    color: color.withOpacity(isSelected ? 0.1 : 0.05),
-                    borderColor: color.withOpacity(isSelected ? 0.7 : 0.4),
+                    color: color.withValues(alpha:isSelected ? 0.1 : 0.05),
+                    borderColor: color.withValues(alpha:isSelected ? 0.7 : 0.4),
                     borderStrokeWidth: 1,
                   );
                 }).toList(),
@@ -169,7 +169,7 @@ class _MapReady extends StatelessWidget {
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: color.withOpacity(isSelected ? 0.9 : 0.6),
+                            color: color.withValues(alpha:isSelected ? 0.9 : 0.6),
                             border: Border.all(color: color, width: 1),
                           ),
                         ),
@@ -191,7 +191,7 @@ class _MapReady extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: AppColors.phosphor
-                                  .withOpacity(isSelected ? 0.9 : 0.6),
+                                  .withValues(alpha:isSelected ? 0.9 : 0.6),
                               width: 1.5,
                             ),
                           ),
@@ -201,7 +201,7 @@ class _MapReady extends StatelessWidget {
                               style: AppTextStyles.body.copyWith(
                                 fontSize: 11,
                                 color: AppColors.phosphor
-                                    .withOpacity(isSelected ? 0.9 : 0.6),
+                                    .withValues(alpha:isSelected ? 0.9 : 0.6),
                               ),
                             ),
                           ),
