@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: situationist-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__Postgres
+        sync: false   # se introduce manualmente / por CLI
+      - key: ConnectionStrings__Redis
+        sync: false
+      - key: Jwt__Issuer
+        sync: false
+      - key: Jwt__Audience
+        sync: false
+      - key: Jwt__PrivateKeyPem
+        sync: false
+      - key: Jwt__PublicKeyPem
+        sync: false
+      - key: OAuth__Google__ClientId
+        sync: false
+      - key: OAuth__Google__ClientSecret
+        sync: false
+      - key: OAuth__Google__RedirectUri
+        sync: false
+      - key: Ai__ApiKey
+        sync: false
