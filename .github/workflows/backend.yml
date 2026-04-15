@@ -1,0 +1,75 @@
+name: Backend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  # ── Test ────────────────────────────────────────────────────────────────────
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore backend/SituationistEvents.sln
+
+      - name: Build
+        run: dotnet build backend/SituationistEvents.sln --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test backend/SituationistEvents.sln
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=results.trx"
+          --results-directory backend/tests/results
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: .NET Tests
+          path: backend/tests/results/*.trx
+          reporter: dotnet-trx
+
+  # ── Deploy to Render ────────────────────────────────────────────────────────
+  # Requires repository secret:
+  #   RENDER_DEPLOY_HOOK_URL — Render dashboard → service → Settings → Deploy Hook
+  #
+  # In Render, disable "Auto-Deploy" so only this hook (after tests pass) triggers deploys.
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: Trigger Render deploy
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$HOOK_URL" ]; then
+            curl -X POST "$HOOK_URL"
+          else
+            echo "RENDER_DEPLOY_HOOK_URL not set — skipping deploy trigger"
+          fi

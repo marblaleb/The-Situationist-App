@@ -1,0 +1,162 @@
+name: Mobile
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile.yml'
+
+env:
+  FLUTTER_VERSION: '3.x'
+
+jobs:
+  # ── Analyze & Test ───────────────────────────────────────────────────────────
+  test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: mobile
+        run: flutter analyze --fatal-warnings
+
+      - name: Run tests
+        working-directory: mobile
+        run: flutter test --reporter expanded
+
+  # ── Build Web + Deploy to Firebase Hosting ──────────────────────────────────
+  # Requires repository secret:
+  #   FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F
+  #   → Firebase Console → Project Settings → Service accounts → Generate new private key
+  #   → Add the JSON content as the secret value
+  deploy-web:
+    name: Deploy Web to Firebase Hosting
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Build Web
+        working-directory: mobile
+        run: flutter build web --release
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F }}
+          channelId: live
+          projectId: the-situationist-7c23f
+          entryPoint: ./mobile
+
+  # ── Build APK + Deploy to Firebase App Distribution ─────────────────────────
+  # Signing secrets (optional — unsigned debug APK used as fallback):
+  #   ANDROID_KEYSTORE_BASE64   — base64 -w 0 keystore.jks
+  #   ANDROID_KEY_ALIAS
+  #   ANDROID_KEY_PASSWORD
+  #   ANDROID_STORE_PASSWORD
+  #
+  # Distribution secret (required to upload):
+  #   FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F  (same as above)
+  #
+  # Testers group: create a "testers" group in Firebase App Distribution console
+  deploy-android:
+    name: Build & Distribute Android APK
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Decode keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > mobile/android/app/keystore.jks
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure signing (key.properties)
+        if: steps.keystore.outputs.signed == 'true'
+        run: |
+          cat > mobile/android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=keystore.jks
+          EOF
+
+      - name: Build release APK (signed)
+        if: steps.keystore.outputs.signed == 'true'
+        working-directory: mobile
+        run: flutter build apk --release
+
+      - name: Build debug APK (unsigned fallback)
+        if: steps.keystore.outputs.signed == 'false'
+        working-directory: mobile
+        run: flutter build apk --debug
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: 1:621239065023:android:e9fdfe616ab0d798a2e90a
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F }}
+          groups: testers
+          releaseNotes: "Build ${{ github.sha }}"
+          file: mobile/build/app/outputs/flutter-apk/${{ steps.keystore.outputs.signed == 'true' && 'app-release.apk' || 'app-debug.apk' }}

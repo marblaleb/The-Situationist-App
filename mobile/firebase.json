@@ -1,0 +1,39 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "the-situationist-7c23f",
+          "appId": "1:621239065023:android:e9fdfe616ab0d798a2e90a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "the-situationist-7c23f",
+          "configurations": {
+            "android": "1:621239065023:android:e9fdfe616ab0d798a2e90a",
+            "ios": "1:621239065023:ios:6307fdbae02fe5f4a2e90a",
+            "macos": "1:621239065023:ios:6307fdbae02fe5f4a2e90a",
+            "web": "1:621239065023:web:8731640d42717129a2e90a",
+            "windows": "1:621239065023:web:396e3f1733e99bf3a2e90a"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
