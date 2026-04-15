@@ -6,6 +6,7 @@ part 'event_model.g.dart';
 class EventModel with _$EventModel {
   const factory EventModel({
     required String id,
+    required String creatorId,
     required String title,
     required String description,
     required String actionType,

@@ -9,6 +9,7 @@ class MockEventsRepository extends Mock implements IEventsRepository {}
 
 final _mockEvent = EventModel(
   id: 'e1',
+  creatorId: 'user1',
   title: 'Test',
   description: 'Desc',
   actionType: 'Sensorial',

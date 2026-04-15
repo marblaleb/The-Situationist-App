@@ -9,6 +9,7 @@ part of 'event_model.dart';
 _$EventModelImpl _$$EventModelImplFromJson(Map<String, dynamic> json) =>
     _$EventModelImpl(
       id: json['id'] as String,
+      creatorId: json['creatorId'] as String,
       title: json['title'] as String,
       description: json['description'] as String,
       actionType: json['actionType'] as String,
@@ -27,6 +28,7 @@ _$EventModelImpl _$$EventModelImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$EventModelImplToJson(_$EventModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'creatorId': instance.creatorId,
       'title': instance.title,
       'description': instance.description,
       'actionType': instance.actionType,

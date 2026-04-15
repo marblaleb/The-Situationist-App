@@ -7,8 +7,6 @@ import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/void_button.dart';
 import '../../../features/auth/bloc/auth_bloc.dart';
 import '../../../shared/extensions/datetime_extensions.dart';
-import '../../../shared/models/event_model.dart';
-import '../../../shared/models/mission_model.dart';
 import '../bloc/profile_bloc.dart';
 import '../data/profile_repository.dart';
 

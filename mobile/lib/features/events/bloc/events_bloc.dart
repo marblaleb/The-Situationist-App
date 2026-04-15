@@ -45,6 +45,15 @@ class EventFullReceived extends EventsEvent {
   List<Object?> get props => [eventId];
 }
 
+class EventCancelRequested extends EventsEvent {
+  final String eventId;
+
+  EventCancelRequested({required this.eventId});
+
+  @override
+  List<Object?> get props => [eventId];
+}
+
 // States
 abstract class EventsState extends Equatable {}
 
@@ -85,6 +94,7 @@ class EventsBloc extends Bloc<EventsEvent, EventsState> {
         super(EventsInitial()) {
     on<EventsNearbyRequested>(_onNearbyRequested);
     on<EventParticipateRequested>(_onParticipateRequested);
+    on<EventCancelRequested>(_onCancelRequested);
     on<EventExpiredReceived>(_onEventExpired);
     on<EventFullReceived>(_onEventFull);
   }
@@ -115,6 +125,17 @@ class EventsBloc extends Bloc<EventsEvent, EventsState> {
         eventId: event.eventId,
         role: event.role,
       );
+    } catch (e) {
+      emit(EventsError(e.toString()));
+    }
+  }
+
+  Future<void> _onCancelRequested(
+    EventCancelRequested event,
+    Emitter<EventsState> emit,
+  ) async {
+    try {
+      await _repository.cancelEvent(event.eventId);
     } catch (e) {
       emit(EventsError(e.toString()));
     }
