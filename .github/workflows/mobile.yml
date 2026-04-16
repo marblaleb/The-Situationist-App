@@ -45,7 +45,7 @@ jobs:
 
   # ── Build Web + Deploy to Firebase Hosting ──────────────────────────────────
   # Requires repository secret:
-  #   FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F
+  #   FIREBASE_SA
   #   → Firebase Console → Project Settings → Service accounts → Generate new private key
   #   → Add the JSON content as the secret value
   deploy-web:
@@ -76,7 +76,7 @@ jobs:
         working-directory: mobile
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
-          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F }}
+          SA_JSON: ${{ secrets.FIREBASE_SA }}
         run: |
           echo "$SA_JSON" > /tmp/sa.json
           npm install -g firebase-tools
@@ -91,7 +91,7 @@ jobs:
   #   ANDROID_STORE_PASSWORD
   #
   # Distribution secret (required to upload):
-  #   FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F  (same as above)
+  #   FIREBASE_SA  (same as above)
   #
   # Testers group: create a "testers" group in Firebase App Distribution console
   deploy-android:
@@ -156,7 +156,7 @@ jobs:
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: 1:621239065023:android:e9fdfe616ab0d798a2e90a
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_THE_SITUATIONIST_7C23F }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SA }}
           groups: testers
           releaseNotes: "Build ${{ github.sha }}"
           file: mobile/build/app/outputs/flutter-apk/${{ steps.keystore.outputs.signed == 'true' && 'app-release.apk' || 'app-debug.apk' }}
