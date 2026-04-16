@@ -70,7 +70,7 @@ jobs:
 
       - name: Build Web
         working-directory: mobile
-        run: flutter build web --release
+        run: flutter build web --release --source-maps
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
