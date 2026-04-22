@@ -54,7 +54,6 @@ class _SituationistAppState extends State<SituationistApp> {
     super.initState();
     _storage = const FlutterSecureStorage(
       aOptions: AndroidOptions(
-        encryptedSharedPreferences: true,
         resetOnError: true,
       ),
     );
