@@ -19,9 +19,13 @@ public static class InfrastructureExtensions
                 config.GetConnectionString("Postgres"),
                 o => o.UseNetTopologySuite()));
 
-        // Redis
+        // Redis — abortConnect=false allows the app to start even if Redis is temporarily unavailable
         services.AddSingleton<IConnectionMultiplexer>(_ =>
-            ConnectionMultiplexer.Connect(config.GetConnectionString("Redis")!));
+        {
+            var redisConfig = ConfigurationOptions.Parse(config.GetConnectionString("Redis")!);
+            redisConfig.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(redisConfig);
+        });
         services.AddScoped<IRedisCacheService, RedisCacheService>();
 
         // Local content service (no external AI API required)

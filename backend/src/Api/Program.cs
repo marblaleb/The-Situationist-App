@@ -48,8 +48,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         // Keep JWT claim names as-is (don't remap "sub" → ClaimTypes.NameIdentifier)
         options.MapInboundClaims = false;
 
-        var publicKeyPem = builder.Configuration["Jwt:PublicKeyPem"]
-            ?? throw new InvalidOperationException("Jwt:PublicKeyPem not configured");
+        // Render stores multiline env vars with literal \n — normalize to real newlines
+        var publicKeyPem = (builder.Configuration["Jwt:PublicKeyPem"]
+            ?? throw new InvalidOperationException("Jwt:PublicKeyPem not configured"))
+            .Replace("\\n", "\n");
         var rsa = RSA.Create();
         rsa.ImportFromPem(publicKeyPem);
 
