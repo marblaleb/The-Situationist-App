@@ -141,6 +141,7 @@ app.UseAuthorization();
 app.UseExceptionHandler();
 
 // Map endpoints
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapAuthEndpoints();
 app.MapEventEndpoints();
 app.MapDerivaEndpoints();
