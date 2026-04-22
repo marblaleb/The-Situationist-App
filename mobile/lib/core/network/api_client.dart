@@ -5,7 +5,7 @@ import 'api_exception.dart';
 class ApiClient {
   static final String baseUrl = () {
     const env = String.fromEnvironment('API_BASE_URL');
-    return env.isEmpty ? 'https://api.situationist.app' : env;
+    return env.isEmpty ? 'https://the-situationist-app.onrender.com' : env;
   }();
 
   late final Dio _dio;
