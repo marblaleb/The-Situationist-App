@@ -3,8 +3,10 @@ import '../auth/auth_service.dart';
 import 'api_exception.dart';
 
 class ApiClient {
-  static const _envUrl = String.fromEnvironment('API_BASE_URL');
-  static const baseUrl = _envUrl.isEmpty ? 'https://api.situationist.app' : _envUrl;
+  static final String baseUrl = () {
+    const env = String.fromEnvironment('API_BASE_URL');
+    return env.isEmpty ? 'https://api.situationist.app' : env;
+  }();
 
   late final Dio _dio;
   final AuthService _authService;
