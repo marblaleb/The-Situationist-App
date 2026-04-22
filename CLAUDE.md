@@ -78,6 +78,78 @@ Aplicación para generar, descubrir y participar en experiencias urbanas efímer
 
 ---
 
+## Errores cometidos — no repetir
+
+### Flutter: `const` en subclases de `Equatable`
+
+`Equatable` tiene un super constructor no-const. Ninguna subclase puede declarar un constructor `const`, aunque el compilador no lo avise hasta el momento de compilar.
+
+```dart
+// MAL — falla en runtime/compilación
+class MapClusterSelected extends MapEvent {
+  const MapClusterSelected(this.cluster); // Error: can't call non-const super
+}
+
+// BIEN
+class MapClusterSelected extends MapEvent {
+  MapClusterSelected(this.cluster);
+}
+```
+
+Afecta a todos los eventos BLoC (`MapEvent`, `DerivaEvent`, etc.) y a los estados que extienden `Equatable`. Tampoco usar `const` en los call-sites si el constructor no es const.
+
+---
+
+### Flutter GoRouter: `go()` vs `push()` para formularios
+
+`context.go('/ruta')` **reemplaza** toda la pila de navegación. Si la página de destino llama a `context.pop()` al terminar, no hay nada a lo que volver y la pantalla queda en blanco.
+
+Para navegar a formularios (create-event, create-mission) que necesitan poder hacer pop al guardar, usar siempre `context.push()`.
+
+```dart
+// MAL — pantalla en blanco tras guardar
+onTap: () => context.go('/home/create-event')
+
+// BIEN
+onTap: () => context.push('/home/create-event')
+```
+
+---
+
+### GitHub Actions: secretos en condiciones `if:`
+
+Los valores de `secrets.*` no pueden evaluarse directamente en expresiones `if:` de GitHub Actions. Hay que exponerlos como variable de entorno y evaluar en shell.
+
+```yaml
+# MAL
+- if: secrets.MY_SECRET != ''
+
+# BIEN
+- id: check
+  env:
+    VALUE: ${{ secrets.MY_SECRET }}
+  run: |
+    if [ -n "$VALUE" ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+    else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+- if: steps.check.outputs.present == 'true'
+```
+
+---
+
+### Flutter CI: `flutter analyze --fatal-infos`
+
+El proyecto tiene hints de nivel `info` (prefer_const_constructors, etc.) que son normales y no bloquean la compilación. Usar `--fatal-infos` rompe el CI inmediatamente. Usar `--fatal-warnings` en su lugar.
+
+```yaml
+# MAL
+run: flutter analyze --fatal-infos
+
+# BIEN
+run: flutter analyze --fatal-warnings
+```
+
+---
+
 ## Comandos útiles
 
 ```bash

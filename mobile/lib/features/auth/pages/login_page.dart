@@ -1,19 +1,22 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/void_button.dart';
 import '../bloc/auth_bloc.dart';
-import '../data/i_auth_repository.dart';
 import '_web_redirect_stub.dart'
     if (dart.library.html) '_web_redirect.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
+
+  static const _callbackScheme = 'app.situationist';
+  static const _callbackHost = 'auth-callback';
+  static const _mobileCallbackUrl = '$_callbackScheme://$_callbackHost';
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +77,6 @@ class LoginPage extends StatelessWidget {
 
   Future<void> _startGoogleLogin(BuildContext context) async {
     if (kIsWeb) {
-      // On web, redirect the entire browser window to the OAuth flow.
-      // The backend will redirect back to /#/auth-callback?token=JWT.
       final origin = getWebOrigin();
       final webCallback = Uri.encodeComponent('$origin/#/auth-callback');
       redirectBrowser(
@@ -83,93 +84,33 @@ class LoginPage extends StatelessWidget {
       return;
     }
 
-    // Mobile: show in-app WebView dialog.
-    final callbackUrl = await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _OAuthWebViewDialog(),
-    );
-
-    if (callbackUrl == null || !context.mounted) return;
-
     final bloc = context.read<AuthBloc>();
-    final repo = context.read<IAuthRepository>();
 
     try {
-      final response = await repo.exchangeCallbackUrl(callbackUrl);
+      // El backend encoda mobileCallbackUrl en state y redirige a
+      // app.situationist://auth-callback?token=JWT tras el OAuth de Google.
+      final mobileCallback = Uri.encodeComponent(_mobileCallbackUrl);
+      final authUrl =
+          '${ApiClient.baseUrl}/auth/login/google?webCallback=$mobileCallback';
+
+      final resultUrl = await FlutterWebAuth2.authenticate(
+        url: authUrl,
+        callbackUrlScheme: _callbackScheme,
+      );
+
+      final token = Uri.parse(resultUrl).queryParameters['token'];
+      if (token == null || token.isEmpty) {
+        bloc.add(AuthErrorOccurred('No se recibió token de autenticación'));
+        return;
+      }
+
       if (!context.mounted) return;
-      bloc.add(AuthLoginCompleted(
-        token: response.accessToken,
-        userId: response.user.userId,
-        email: response.user.email,
-      ));
+      bloc.add(AuthWebCallbackReceived(token: token));
     } catch (e) {
       if (context.mounted) {
-        bloc.add(AuthLoginCompleted(token: '', userId: '', email: ''));
+        bloc.add(AuthErrorOccurred('Error al autenticar: ${e.toString()}'));
       }
     }
-  }
-}
-
-class _OAuthWebViewDialog extends StatefulWidget {
-  const _OAuthWebViewDialog();
-
-  @override
-  State<_OAuthWebViewDialog> createState() => _OAuthWebViewDialogState();
-}
-
-class _OAuthWebViewDialogState extends State<_OAuthWebViewDialog> {
-  late final WebViewController _controller;
-  static const _callbackPath = '/auth/callback/google';
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onNavigationRequest: (request) {
-          if (request.url.contains(_callbackPath)) {
-            Navigator.of(context).pop(request.url);
-            return NavigationDecision.prevent;
-          }
-          return NavigationDecision.navigate;
-        },
-      ))
-      ..loadRequest(Uri.parse('${ApiClient.baseUrl}/auth/login/google'));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: AppColors.bgVoid,
-      insetPadding: const EdgeInsets.all(16),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.8,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Text('AUTENTICACIÓN', style: AppTextStyles.label),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: MonoText(
-                      '⊗',
-                      color: AppColors.fgSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(height: 1, color: AppColors.fgMuted),
-            Expanded(child: WebViewWidget(controller: _controller)),
-          ],
-        ),
-      ),
-    );
   }
 }
 

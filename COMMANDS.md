@@ -139,4 +139,43 @@ docker-compose up --build
 
 # Terminal 2 — Mobile (Android emulator)
 cd mobile && flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
+
+
+ Flutter Web → Firebase Hosting                                                                                                                 
+  Desde mobile/:                                                                                                                               
+  
+  cd mobile
+  flutter pub get
+  flutter build web --release
+  firebase deploy --only hosting --project the-situationist-7c23f
+
+  La app quedará en https://the-situationist-7c23f.web.app.
+
+  ---
+  Android → Firebase App Distribution
+
+  Primero activa App Distribution en Firebase Console → tu proyecto → App Distribution → click en Get started.
+
+  Luego desde mobile/:
+
+  # Construir el APK
+  flutter build apk --release
+
+  # Subir a App Distribution
+  firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+    --app 1:621239065023:android:e9fdfe616ab0d798a2e90a \
+    --release-notes "Primera versión" \
+    --testers "correo@ejemplo.com" \
+    --project the-situationist-7c23f
+
+  Sustituye --testers con los correos de los testers separados por comas. Recibirán un email con el enlace de descarga.
+
+  ---
+  Commits pendientes
+
+  Los archivos modificados hay que commitearlos:
+
+  git add mobile/pubspec.yaml mobile/lib/main.dart mobile/firebase.json
+  git commit -m "feat: add Firebase Core and configure Hosting + App Distribution"
+  git push origin master
 ```

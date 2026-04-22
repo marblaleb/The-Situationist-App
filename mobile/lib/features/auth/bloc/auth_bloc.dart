@@ -30,6 +30,14 @@ class AuthLogoutRequested extends AuthEvent {
   List<Object?> get props => [];
 }
 
+class AuthErrorOccurred extends AuthEvent {
+  final String message;
+  AuthErrorOccurred(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 /// Fired by AuthCallbackPage on web after Google OAuth redirect returns a token.
 class AuthWebCallbackReceived extends AuthEvent {
   final String token;
@@ -86,6 +94,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginCompleted>(_onLoginCompleted);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthWebCallbackReceived>(_onWebCallbackReceived);
+    on<AuthErrorOccurred>((event, emit) => emit(AuthError(event.message)));
   }
 
   Future<void> _onCheckRequested(

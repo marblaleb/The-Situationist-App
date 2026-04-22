@@ -52,7 +52,12 @@ class _SituationistAppState extends State<SituationistApp> {
   @override
   void initState() {
     super.initState();
-    _storage = const FlutterSecureStorage();
+    _storage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(
+        encryptedSharedPreferences: true,
+        resetOnError: true,
+      ),
+    );
     _authService = AuthService(_storage);
     _apiClient = ApiClient(_authService);
     _authRepository = AuthRepository(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 
 class VoidButton extends StatelessWidget {
@@ -31,7 +30,8 @@ class VoidButton extends StatelessWidget {
         ),
         child: Text(
           label.toUpperCase(),
-          style: GoogleFonts.jetBrainsMono(
+          style: const TextStyle(
+            fontFamily: 'JetBrainsMono',
             fontSize: 12,
             fontWeight: FontWeight.w400,
             letterSpacing: 1.5,

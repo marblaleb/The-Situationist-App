@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 
 class TypewriterText extends StatefulWidget {
@@ -78,15 +77,17 @@ class _TypewriterTextState extends State<TypewriterText>
 
   bool get _isComplete => _index >= widget.text.length;
 
+  static const _defaultStyle = TextStyle(
+    fontFamily: 'Inter',
+    color: AppColors.fgPrimary,
+    fontSize: 14,
+    fontWeight: FontWeight.w300,
+    height: 1.6,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final style = widget.style ??
-        GoogleFonts.inter(
-          color: AppColors.fgPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w300,
-          height: 1.6,
-        );
+    final style = widget.style ?? _defaultStyle;
 
     return RichText(
       text: TextSpan(

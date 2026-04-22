@@ -1,5 +1,18 @@
 services:
 
+  # ── ngrok tunnel (expone la API al emulador Android y a Google OAuth) ────────
+  ngrok:
+    image: ngrok/ngrok:alpine
+    container_name: situationist-ngrok
+    environment:
+      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
+    command: http api:8080 --url=${NGROK_DOMAIN} --log=stdout
+    depends_on:
+      - api
+    ports:
+      - "4040:4040"
+    restart: unless-stopped
+
   # ── Backend API ──────────────────────────────────────────────────────────────
   api:
     build:
@@ -14,10 +27,12 @@ services:
       ConnectionStrings__Redis: "redis:6379"
       Jwt__Issuer: "${JWT_ISSUER}"
       Jwt__Audience: "${JWT_AUDIENCE}"
-      Jwt__Secret: "${JWT_SECRET}"
-      Google__ClientId: "${GOOGLE_CLIENT_ID}"
-      Google__ClientSecret: "${GOOGLE_CLIENT_SECRET}"
-      Anthropic__ApiKey: "${ANTHROPIC_API_KEY}"
+      Jwt__PrivateKeyPem: "${JWT_PRIVATE_KEY_PEM}"
+      Jwt__PublicKeyPem: "${JWT_PUBLIC_KEY_PEM}"
+      OAuth__Google__ClientId: "${GOOGLE_CLIENT_ID}"
+      OAuth__Google__ClientSecret: "${GOOGLE_CLIENT_SECRET}"
+      OAuth__Google__RedirectUri: "${GOOGLE_REDIRECT_URI}"
+      Ai__ApiKey: "${ANTHROPIC_API_KEY}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -27,10 +42,10 @@ services:
 
   # ── PostgreSQL ───────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:17-alpine
+    image: postgis/postgis:17-3.5-alpine
     container_name: situationist-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: situationist
       POSTGRES_USER: situationist
@@ -49,7 +64,7 @@ services:
     image: redis:7-alpine
     container_name: situationist-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:

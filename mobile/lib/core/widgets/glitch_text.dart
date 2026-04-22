@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 
 class GlitchText extends StatefulWidget {
@@ -49,14 +48,16 @@ class _GlitchTextState extends State<GlitchText>
     super.dispose();
   }
 
+  static const _defaultStyle = TextStyle(
+    fontFamily: 'SpaceMono',
+    color: AppColors.fgPrimary,
+    fontSize: 18,
+    letterSpacing: 4,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final style = widget.style ??
-        GoogleFonts.spaceMono(
-          color: AppColors.fgPrimary,
-          fontSize: 18,
-          letterSpacing: 4,
-        );
+    final style = widget.style ?? _defaultStyle;
 
     return Stack(
       children: [

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 
 class MonoText extends StatelessWidget {
@@ -22,7 +21,8 @@ class MonoText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.jetBrainsMono(
+      style: TextStyle(
+        fontFamily: 'JetBrainsMono',
         fontSize: size,
         color: color,
         fontWeight: weight,

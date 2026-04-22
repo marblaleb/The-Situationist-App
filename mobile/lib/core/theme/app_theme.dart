@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 ThemeData buildAppTheme() {
@@ -11,21 +10,24 @@ ThemeData buildAppTheme() {
       secondary: AppColors.amber,
       error: AppColors.danger,
     ),
-    fontFamily: GoogleFonts.inter().fontFamily,
-    textTheme: TextTheme(
-      displayLarge: GoogleFonts.spaceMono(
+    fontFamily: 'Inter',
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(
+        fontFamily: 'SpaceMono',
         color: AppColors.fgPrimary,
         fontSize: 22,
         fontWeight: FontWeight.w400,
         letterSpacing: 4,
       ),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: TextStyle(
+        fontFamily: 'Inter',
         color: AppColors.fgPrimary,
         fontSize: 14,
         fontWeight: FontWeight.w300,
         height: 1.6,
       ),
-      labelSmall: GoogleFonts.jetBrainsMono(
+      labelSmall: TextStyle(
+        fontFamily: 'JetBrainsMono',
         color: AppColors.fgSecondary,
         fontSize: 11,
         letterSpacing: 1.2,
@@ -36,22 +38,23 @@ ThemeData buildAppTheme() {
       thickness: 1,
       space: 0,
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: const InputDecorationTheme(
       filled: true,
       fillColor: AppColors.bgElevated,
-      border: const OutlineInputBorder(
+      border: OutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: AppColors.fgMuted),
       ),
-      enabledBorder: const OutlineInputBorder(
+      enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: AppColors.fgMuted),
       ),
-      focusedBorder: const OutlineInputBorder(
+      focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: AppColors.phosphor),
       ),
-      hintStyle: GoogleFonts.jetBrainsMono(
+      hintStyle: TextStyle(
+        fontFamily: 'JetBrainsMono',
         color: AppColors.fgMuted,
         fontSize: 13,
       ),
