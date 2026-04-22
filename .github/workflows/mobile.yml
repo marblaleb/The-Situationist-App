@@ -73,12 +73,13 @@ jobs:
         run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ vars.API_BASE_URL }}
 
       - name: Deploy to Firebase Hosting
-        working-directory: mobile
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: |
-          npm install -g firebase-tools
-          firebase deploy --only hosting --project the-situationist-7c23f --non-interactive --token "$FIREBASE_TOKEN"
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SA }}
+          projectId: the-situationist-7c23f
+          channelId: live
+          entryPoint: ./mobile
 
   # ── Build APK + Deploy to Firebase App Distribution ─────────────────────────
   # Signing secrets (optional — unsigned debug APK used as fallback):
