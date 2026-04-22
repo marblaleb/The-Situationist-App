@@ -76,13 +76,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             },
             OnTokenValidated = async ctx =>
             {
-                // Check JWT blacklist
+                // Check JWT blacklist — fail-open if Redis is unavailable
                 var jti = ctx.Principal?.FindFirst("jti")?.Value;
                 if (jti is not null)
                 {
-                    var cache = ctx.HttpContext.RequestServices.GetRequiredService<IRedisCacheService>();
-                    if (await cache.ExistsAsync($"auth:blacklist:{jti}"))
-                        ctx.Fail("Token has been revoked");
+                    try
+                    {
+                        var cache = ctx.HttpContext.RequestServices.GetRequiredService<IRedisCacheService>();
+                        if (await cache.ExistsAsync($"auth:blacklist:{jti}"))
+                            ctx.Fail("Token has been revoked");
+                    }
+                    catch
+                    {
+                        // Redis unavailable — allow request through rather than blocking all users
+                    }
                 }
             }
         };
