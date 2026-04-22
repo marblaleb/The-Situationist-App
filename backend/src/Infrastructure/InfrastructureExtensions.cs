@@ -19,11 +19,13 @@ public static class InfrastructureExtensions
                 config.GetConnectionString("Postgres"),
                 o => o.UseNetTopologySuite()));
 
-        // Redis — abortConnect=false allows the app to start even if Redis is temporarily unavailable
+        // Redis — ssl=True required for Upstash; abortConnect=false prevents startup crash
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
             var redisConfig = ConfigurationOptions.Parse(config.GetConnectionString("Redis")!);
             redisConfig.AbortOnConnectFail = false;
+            redisConfig.Ssl = redisConfig.EndPoints.Any(ep =>
+                ep.ToString()!.Contains("upstash.io"));
             return ConnectionMultiplexer.Connect(redisConfig);
         });
         services.AddScoped<IRedisCacheService, RedisCacheService>();
