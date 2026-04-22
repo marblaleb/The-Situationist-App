@@ -135,10 +135,10 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 app.UseCors();
+app.UseExceptionHandler();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseExceptionHandler();
 
 // Map endpoints
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
