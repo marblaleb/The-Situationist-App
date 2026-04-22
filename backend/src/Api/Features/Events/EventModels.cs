@@ -15,6 +15,7 @@ public record CreateEventRequest(
 
 public record EventResponse(
     Guid Id,
+    Guid CreatorId,
     string Title,
     string Description,
     string ActionType,

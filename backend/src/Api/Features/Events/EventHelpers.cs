@@ -6,7 +6,7 @@ namespace Api.Features.Events;
 internal static class EventHelpers
 {
     internal static EventResponse MapToResponse(Event e, int participantCount) => new(
-        e.Id, e.Title, e.Description,
+        e.Id, e.CreatorId, e.Title, e.Description,
         e.ActionType.ToString(), e.InterventionLevel.ToString(),
         e.Location.Y, e.Location.X,
         e.RadiusMeters, e.Visibility.ToString(),
