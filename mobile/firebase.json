@@ -23,6 +23,7 @@
     }
   },
   "hosting": {
+    "site": "the-situationist-7c23f",
     "public": "build/web",
     "ignore": [
       "firebase.json",
