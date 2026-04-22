@@ -74,13 +74,31 @@ class _MapView extends StatelessWidget {
           return Scaffold(
             backgroundColor: AppColors.bgVoid,
             body: Center(
-              child: Text(
-                state.message,
-                style: const TextStyle(
-                  color: AppColors.fgSecondary,
-                  fontFamily: 'JetBrainsMono',
-                  fontSize: 12,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'ERROR AL CARGAR',
+                    style: const TextStyle(
+                      color: AppColors.fgSecondary,
+                      fontFamily: 'JetBrainsMono',
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () => context.read<MapBloc>().add(MapInitialized()),
+                    child: const Text(
+                      '↺ REINTENTAR',
+                      style: TextStyle(
+                        color: AppColors.phosphor,
+                        fontFamily: 'JetBrainsMono',
+                        fontSize: 12,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );

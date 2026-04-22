@@ -84,6 +84,19 @@ class _CreateEventViewState extends State<_CreateEventView> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: const Text(
+                    '← VOLVER',
+                    style: TextStyle(
+                      color: AppColors.fgMuted,
+                      fontFamily: 'JetBrainsMono',
+                      fontSize: 11,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 MonoText(
                   'NUEVO EVENTO',
                   color: AppColors.fgPrimary,

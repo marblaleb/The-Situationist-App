@@ -164,6 +164,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     MapInitialized event,
     Emitter<MapState> emit,
   ) async {
+    emit(MapLoading());
     try {
       final (lat, lng) = await _locationService.getCurrentPosition();
       final events = await _eventsRepository.getNearbyEvents(
@@ -173,12 +174,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       );
       final clusters = _clusterEvents(events);
       emit(MapReady(lat: lat, lng: lng, events: events, clusters: clusters));
-      await _signalRService.connect();
-      await _signalRService.joinZone(lat, lng);
-      _signalRSubscription = _signalRService.events.listen((e) {
-        if (e is EventExpiredSignal) add(_MapEventExpired(e.eventId));
-        if (e is EventFullSignal) add(_MapEventFull(e.eventId));
-      });
+      // SignalR is optional — failure must not overwrite the working map state
+      try {
+        await _signalRService.connect();
+        await _signalRService.joinZone(lat, lng);
+        _signalRSubscription = _signalRService.events.listen((e) {
+          if (e is EventExpiredSignal) add(_MapEventExpired(e.eventId));
+          if (e is EventFullSignal) add(_MapEventFull(e.eventId));
+        });
+      } catch (_) {}
     } catch (e) {
       emit(MapError(e.toString()));
     }

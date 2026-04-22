@@ -89,6 +89,19 @@ class _MissionActiveViewState extends State<_MissionActiveView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    GestureDetector(
+                      onTap: () => context.go('/home/missions'),
+                      child: const Text(
+                        '← VOLVER',
+                        style: TextStyle(
+                          color: AppColors.fgMuted,
+                          fontFamily: 'JetBrainsMono',
+                          fontSize: 11,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     MonoText(
                       'pista ${clue.order}',
                       color: AppColors.fgSecondary,
