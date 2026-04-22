@@ -70,7 +70,7 @@ public static class AuthEndpoints
             var expiresAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim));
             var ttl = expiresAt - DateTimeOffset.UtcNow;
             if (ttl > TimeSpan.Zero)
-                await cache.SetAsync($"auth:blacklist:{jti}", "1", ttl);
+                try { await cache.SetAsync($"auth:blacklist:{jti}", "1", ttl); } catch { }
             return Results.NoContent();
         });
 

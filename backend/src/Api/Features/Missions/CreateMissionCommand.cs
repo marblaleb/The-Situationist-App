@@ -78,7 +78,7 @@ public class CreateMissionCommandHandler(
         await db.SaveChangesAsync(ct);
 
         var geohash6 = GeoHash.Encode(req.Latitude, req.Longitude, 6);
-        await cache.RemoveAsync($"missions:nearby:{geohash6}");
+        try { await cache.RemoveAsync($"missions:nearby:{geohash6}"); } catch { }
 
         return new MissionSummaryResponse(
             mission.Id, mission.Title, mission.Description,

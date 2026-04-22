@@ -70,7 +70,7 @@ public class CreateEventCommandHandler(
         await db.SaveChangesAsync(ct);
 
         var geohash6 = GeoHash.Encode(req.Latitude, req.Longitude, 6);
-        await cache.RemoveAsync($"events:nearby:{geohash6}");
+        try { await cache.RemoveAsync($"events:nearby:{geohash6}"); } catch { }
 
         return EventHelpers.MapToResponse(evt, 0);
     }
