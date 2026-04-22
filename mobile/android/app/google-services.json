@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "621239065023",
+    "project_id": "the-situationist-7c23f",
+    "storage_bucket": "the-situationist-7c23f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621239065023:android:e9fdfe616ab0d798a2e90a",
+        "android_client_info": {
+          "package_name": "app.situationist.situationist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBes3pKO8zhSBfyrvDTi3JvaNAqwnFSk8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -47,7 +47,6 @@ mobile/android/.gradle/
 mobile/android/captures/
 mobile/android/local.properties
 mobile/android/key.properties
-mobile/android/app/google-services.json
 mobile/android/**/*.keystore
 mobile/android/**/*.jks
 

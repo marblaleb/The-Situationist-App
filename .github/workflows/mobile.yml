@@ -139,11 +139,6 @@ jobs:
           storeFile=keystore.jks
           EOF
 
-      - name: Inject google-services.json
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: echo "$GOOGLE_SERVICES_JSON" | base64 -d > mobile/android/app/google-services.json
-
       - name: Build release APK (signed)
         if: steps.keystore.outputs.signed == 'true'
         working-directory: mobile
