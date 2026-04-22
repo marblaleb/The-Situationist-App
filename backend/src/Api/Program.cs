@@ -27,7 +27,7 @@ builder.Services.AddCors(options =>
         if (builder.Environment.IsDevelopment())
             policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
         else
-            policy.WithOrigins("https://situationist.app", "https://app.situationist.app")
+            policy.WithOrigins("https://situationist.app", "https://app.situationist.app", "https://the-situationist-7c23f.web.app", "https://the-situationist-7c23f.firebaseapp.com")
                   .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
 });
