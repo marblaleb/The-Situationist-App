@@ -48,10 +48,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         // Keep JWT claim names as-is (don't remap "sub" → ClaimTypes.NameIdentifier)
         options.MapInboundClaims = false;
 
-        // Render stores multiline env vars with literal \n — normalize to real newlines
-        var publicKeyPem = (builder.Configuration["Jwt:PublicKeyPem"]
-            ?? throw new InvalidOperationException("Jwt:PublicKeyPem not configured"))
-            .Replace("\\n", "\n");
+        var publicKeyPem = NormalizePem(builder.Configuration["Jwt:PublicKeyPem"]
+            ?? throw new InvalidOperationException("Jwt:PublicKeyPem not configured"));
         var rsa = RSA.Create();
         rsa.ImportFromPem(publicKeyPem);
 
@@ -154,3 +152,10 @@ app.MapChatEndpoints();
 app.MapHub<EventHub>("/hubs/events");
 
 app.Run();
+
+static string NormalizePem(string pem) =>
+    pem.Trim()          // leading/trailing whitespace
+       .Trim('"')       // surrounding quotes pasted from .env file
+       .Replace("\\n", "\n")   // literal \n (Render dashboard encoding)
+       .Replace("\r\n", "\n")  // Windows CRLF
+       .Trim();
