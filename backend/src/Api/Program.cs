@@ -5,6 +5,7 @@ using Api.Features.Events;
 using Api.Features.Missions;
 using Api.Features.Profile;
 using FluentValidation;
+using Microsoft.AspNetCore.HttpOverrides;
 using Infrastructure;
 using Infrastructure.Cache;
 using Microsoft.EntityFrameworkCore;
@@ -128,8 +129,11 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-if (!app.Environment.IsDevelopment())
-    app.UseHttpsRedirection();
+// Render terminates SSL at the load balancer — trust forwarded headers instead of redirecting
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
