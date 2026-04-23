@@ -23,7 +23,7 @@ class ChatMessageSignal extends SignalREvent {
 
 class SignalRService {
   static const _hubUrl =
-      '${String.fromEnvironment('API_BASE_URL', defaultValue: 'https://api.situationist.app')}/hubs/events';
+      '${String.fromEnvironment('API_BASE_URL', defaultValue: 'https://the-situationist-app.onrender.com')}/hubs/events';
 
   final AuthService _authService;
   HubConnection? _connection;

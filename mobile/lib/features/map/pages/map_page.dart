@@ -85,6 +85,16 @@ class _MapView extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: const TextStyle(
+                      color: AppColors.fgMuted,
+                      fontFamily: 'JetBrainsMono',
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 20),
                   GestureDetector(
                     onTap: () => context.read<MapBloc>().add(MapInitialized()),
