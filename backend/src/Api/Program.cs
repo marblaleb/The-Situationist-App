@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -98,7 +99,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // SignalR
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 // Rate limiting
 var maxAiRpm = builder.Configuration.GetValue<int>("Ai:MaxRequestsPerMinute", 20);

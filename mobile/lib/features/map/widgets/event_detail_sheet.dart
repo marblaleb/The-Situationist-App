@@ -114,36 +114,16 @@ class EventDetailSheet extends StatelessWidget {
                   );
                 }
 
-                return Row(
-                  children: [
-                    Expanded(
-                      child: VoidButton(
-                        label: 'PARTICIPAR',
-                        onPressed: disabled
-                            ? null
-                            : () => context.read<EventsBloc>().add(
-                                  EventParticipateRequested(
-                                    eventId: event.id,
-                                    role: 'Participante',
-                                  ),
-                                ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: VoidButton(
-                        label: 'OBSERVAR',
-                        onPressed: disabled
-                            ? null
-                            : () => context.read<EventsBloc>().add(
-                                  EventParticipateRequested(
-                                    eventId: event.id,
-                                    role: 'Observador',
-                                  ),
-                                ),
-                      ),
-                    ),
-                  ],
+                return VoidButton(
+                  label: 'PARTICIPAR',
+                  onPressed: disabled
+                      ? null
+                      : () => context.read<EventsBloc>().add(
+                            EventParticipateRequested(
+                              eventId: event.id,
+                              role: 'Participante',
+                            ),
+                          ),
                 );
               }),
               const SizedBox(height: 8),

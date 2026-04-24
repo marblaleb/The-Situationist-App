@@ -38,20 +38,12 @@ class _ProfileViewState extends State<_ProfileView> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      context.read<ProfileBloc>().add(ProfileActivityPageRequested());
-    }
   }
 
   @override
@@ -135,41 +127,6 @@ class _ProfileViewState extends State<_ProfileView> {
                 ),
               )),
 
-        // ── Activity log
-        const SizedBox(height: 24),
-        Container(height: 1, color: AppColors.fgMuted),
-        const SizedBox(height: 16),
-        Text('REGISTRO DE ACTIVIDAD', style: AppTextStyles.monoDisplay),
-        const SizedBox(height: 16),
-        ...state.activityItems.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  MonoText(
-                    item.occurredAt.toTimestamp(),
-                    color: AppColors.fgMuted,
-                    size: 11,
-                  ),
-                  const SizedBox(width: 16),
-                  MonoText(item.type, size: 12),
-                ],
-              ),
-            )),
-        if (state.isLoadingMore)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: SizedBox.shrink(),
-          ),
-        if (state.nextCursor != null && !state.isLoadingMore)
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 24),
-            child: VoidButton(
-              label: 'CARGAR MÁS',
-              onPressed: () => context
-                  .read<ProfileBloc>()
-                  .add(ProfileActivityPageRequested()),
-            ),
-          ),
         const SizedBox(height: 32),
         Container(height: 1, color: AppColors.fgMuted),
         const SizedBox(height: 16),
