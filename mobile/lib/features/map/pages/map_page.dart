@@ -4,9 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/location/location_service.dart';
 import '../../../core/network/api_client.dart';
-import '../../../core/realtime/signalr_service.dart';
 import '../../../features/events/bloc/events_bloc.dart';
 import '../../../features/events/data/events_repository.dart';
 import '../../../shared/models/event_model.dart';
@@ -14,34 +12,31 @@ import '../bloc/map_bloc.dart';
 import '../widgets/cluster_list_sheet.dart';
 import '../widgets/event_detail_sheet.dart';
 
-class MapPage extends StatelessWidget {
-  final LocationService locationService;
-  final SignalRService signalRService;
+class MapPage extends StatefulWidget {
   final ApiClient apiClient;
 
   const MapPage({
     super.key,
-    required this.locationService,
-    required this.signalRService,
     required this.apiClient,
   });
 
   @override
+  State<MapPage> createState() => _MapPageState();
+}
+
+class _MapPageState extends State<MapPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<MapBloc>().add(MapInitialized());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final eventsRepo = EventsRepository(apiClient);
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => MapBloc(
-            eventsRepository: eventsRepo,
-            locationService: locationService,
-            signalRService: signalRService,
-          )..add(MapInitialized()),
-        ),
-        BlocProvider(
-          create: (_) => EventsBloc(repository: eventsRepo),
-        ),
-      ],
+    return BlocProvider(
+      create: (_) => EventsBloc(
+        repository: EventsRepository(widget.apiClient),
+      ),
       child: const _MapView(),
     );
   }

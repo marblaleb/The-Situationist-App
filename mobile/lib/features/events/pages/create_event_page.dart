@@ -9,6 +9,7 @@ import '../../../core/widgets/void_button.dart';
 import '../../../core/location/location_service.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/event_model.dart';
+import '../../../features/map/bloc/map_bloc.dart';
 import '../bloc/create_event_bloc.dart';
 import '../data/events_repository.dart';
 
@@ -74,6 +75,7 @@ class _CreateEventViewState extends State<_CreateEventView> {
     return BlocConsumer<CreateEventBloc, CreateEventState>(
       listener: (context, state) {
         if (state is CreateEventSuccess) {
+          context.read<MapBloc>().add(MapEventAdded(state.event));
           Navigator.of(context).pop();
         }
       },

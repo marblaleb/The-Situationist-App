@@ -5,21 +5,21 @@ class LocationService {
   static const defaultLng = -3.7038;
 
   Future<(double lat, double lng)> getCurrentPosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return (defaultLat, defaultLng);
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return (defaultLat, defaultLng);
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return (defaultLat, defaultLng);
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
         return (defaultLat, defaultLng);
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return (defaultLat, defaultLng);
-    }
 
-    try {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,

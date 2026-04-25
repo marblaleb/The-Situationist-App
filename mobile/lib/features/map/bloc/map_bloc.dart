@@ -83,6 +83,13 @@ class _MapEventFull extends MapEvent {
   List<Object?> get props => [eventId];
 }
 
+class MapEventAdded extends MapEvent {
+  final EventModel event;
+  MapEventAdded(this.event);
+  @override
+  List<Object?> get props => [event];
+}
+
 abstract class MapState extends Equatable {}
 
 class MapLoading extends MapState {
@@ -158,12 +165,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapClusterSelected>(_onClusterSelected);
     on<_MapEventExpired>(_onExpired);
     on<_MapEventFull>(_onFull);
+    on<MapEventAdded>(_onEventAdded);
   }
 
   Future<void> _onInitialized(
     MapInitialized event,
     Emitter<MapState> emit,
   ) async {
+    await _signalRSubscription?.cancel();
+    _signalRSubscription = null;
     emit(MapLoading());
     try {
       final (lat, lng) = await _locationService.getCurrentPosition();
@@ -176,6 +186,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(MapReady(lat: lat, lng: lng, events: events, clusters: clusters));
       // SignalR is optional — failure must not overwrite the working map state
       try {
+        await _signalRService.disconnect();
         await _signalRService.connect();
         await _signalRService.joinZone(lat, lng);
         _signalRSubscription = _signalRService.events.listen((e) {
@@ -228,6 +239,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       }).toList();
       emit(s.copyWith(events: updated, clusters: _clusterEvents(updated)));
     }
+  }
+
+  void _onEventAdded(MapEventAdded event, Emitter<MapState> emit) {
+    if (state is! MapReady) return;
+    final s = state as MapReady;
+    final updated = [...s.events, event.event];
+    emit(s.copyWith(events: updated, clusters: _clusterEvents(updated)));
   }
 
   @override

@@ -21,7 +21,9 @@ import 'features/deriva/data/deriva_repository.dart';
 import 'features/deriva/pages/deriva_active_page.dart';
 import 'features/deriva/pages/deriva_home_page.dart';
 import 'features/chat/pages/event_chat_page.dart';
+import 'features/events/data/events_repository.dart';
 import 'features/events/pages/create_event_page.dart';
+import 'features/map/bloc/map_bloc.dart';
 import 'features/events/pages/create_hub_page.dart';
 import 'features/map/pages/location_picker_page.dart';
 import 'features/map/pages/map_page.dart';
@@ -47,6 +49,7 @@ class _SituationistAppState extends State<SituationistApp> {
   late final SignalRService _signalRService;
   late final AuthBloc _authBloc;
   late final DerivaBloc _derivaBloc;
+  late final MapBloc _mapBloc;
   late final GoRouter _router;
 
   @override
@@ -67,6 +70,11 @@ class _SituationistAppState extends State<SituationistApp> {
     _signalRService = SignalRService(_authService);
     _authBloc = AuthBloc(repository: _authRepository);
     _derivaBloc = DerivaBloc(repository: DerivaRepository(_apiClient));
+    _mapBloc = MapBloc(
+      eventsRepository: EventsRepository(_apiClient),
+      locationService: _locationService,
+      signalRService: _signalRService,
+    );
 
     _router = GoRouter(
       initialLocation: '/',
@@ -87,11 +95,7 @@ class _SituationistAppState extends State<SituationistApp> {
             StatefulShellBranch(routes: [
               GoRoute(
                 path: '/home/map',
-                builder: (_, __) => MapPage(
-                  locationService: _locationService,
-                  signalRService: _signalRService,
-                  apiClient: _apiClient,
-                ),
+                builder: (_, __) => MapPage(apiClient: _apiClient),
               ),
             ]),
             StatefulShellBranch(routes: [
@@ -128,11 +132,7 @@ class _SituationistAppState extends State<SituationistApp> {
         ),
         GoRoute(
           path: '/home/events/:id',
-          builder: (_, state) => MapPage(
-            locationService: _locationService,
-            signalRService: _signalRService,
-            apiClient: _apiClient,
-          ),
+          builder: (_, state) => MapPage(apiClient: _apiClient),
         ),
         GoRoute(
           path: '/home/events/:id/chat',
@@ -191,6 +191,7 @@ class _SituationistAppState extends State<SituationistApp> {
   void dispose() {
     _authBloc.close();
     _derivaBloc.close();
+    _mapBloc.close();
     _signalRService.dispose();
     super.dispose();
   }
@@ -208,6 +209,7 @@ class _SituationistAppState extends State<SituationistApp> {
         providers: [
           BlocProvider.value(value: _authBloc),
           BlocProvider.value(value: _derivaBloc),
+          BlocProvider.value(value: _mapBloc),
         ],
         child: MaterialApp.router(
           title: 'Situationist',
