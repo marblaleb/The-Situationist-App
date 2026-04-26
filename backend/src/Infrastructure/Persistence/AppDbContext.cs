@@ -29,6 +29,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.ExternalId, x.Provider }).IsUnique();
             e.Property(x => x.Provider).HasConversion<string>();
+            // Unique partial index — NULL excluded so rows without a username don't conflict.
+            // Application code enforces case-insensitive uniqueness before this index fires.
+            e.HasIndex(x => x.Username).IsUnique().HasFilter("\"Username\" IS NOT NULL");
         });
 
         // Event
