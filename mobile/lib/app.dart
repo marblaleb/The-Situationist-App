@@ -16,6 +16,7 @@ import 'features/auth/data/i_auth_repository.dart';
 import 'features/auth/pages/auth_callback_page.dart';
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/splash_page.dart';
+import 'features/auth/pages/username_setup_page.dart';
 import 'features/deriva/bloc/deriva_bloc.dart';
 import 'features/deriva/data/deriva_repository.dart';
 import 'features/deriva/pages/deriva_active_page.dart';
@@ -87,6 +88,12 @@ class _SituationistAppState extends State<SituationistApp> {
           path: '/auth-callback',
           builder: (_, state) => AuthCallbackPage(
             token: state.uri.queryParameters['token'],
+          ),
+        ),
+        GoRoute(
+          path: '/username-setup',
+          builder: (_, __) => UsernameSetupPage(
+            apiClient: _apiClient,
           ),
         ),
         StatefulShellRoute.indexedStack(

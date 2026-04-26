@@ -9,9 +9,15 @@ String? authGuard(BuildContext context, GoRouterState state) {
   final isLoginRoute = state.matchedLocation == '/login';
   final isSplashRoute = state.matchedLocation == '/';
   final isCallbackRoute = state.matchedLocation == '/auth-callback';
+  final isUsernameSetupRoute = state.matchedLocation == '/username-setup';
 
   if (authState is AuthAuthenticated) {
-    if (isLoginRoute || isSplashRoute) return '/home/map';
+    if (isLoginRoute || isSplashRoute) {
+      return authState.username.isEmpty ? '/username-setup' : '/home/map';
+    }
+    if (authState.username.isEmpty && !isUsernameSetupRoute) {
+      return '/username-setup';
+    }
     return null;
   }
 
@@ -20,7 +26,7 @@ String? authGuard(BuildContext context, GoRouterState state) {
     return null;
   }
 
-  // AuthLoading, AuthInitial → quedarse en splash (callback page handles itself)
+  // AuthLoading, AuthInitial → stay on splash
   if (!isSplashRoute && !isLoginRoute && !isCallbackRoute) return '/';
   return null;
 }
