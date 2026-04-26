@@ -12,6 +12,6 @@ public class GetCurrentUserQueryHandler(AppDbContext db) : IRequestHandler<GetCu
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == request.UserId, ct);
         if (user is null) return null;
-        return new UserDto(user.Id, user.Email, user.Provider.ToString());
+        return new UserDto(user.Id, user.Email, user.Provider.ToString(), user.Username ?? string.Empty);
     }
 }
