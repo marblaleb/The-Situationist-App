@@ -175,7 +175,7 @@ class _ChatBubble extends StatelessWidget {
               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             MonoText(
-              message.senderHandle,
+              message.senderUsername,
               color: handleColor,
               size: 10,
             ),

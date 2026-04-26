@@ -40,6 +40,14 @@ class ApiClient {
     }
   }
 
+  Future<Response<T>> put<T>(String path, {dynamic data}) async {
+    try {
+      return await _dio.put<T>(path, data: data);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
   Future<Response<T>> delete<T>(String path) async {
     try {
       return await _dio.delete<T>(path);
