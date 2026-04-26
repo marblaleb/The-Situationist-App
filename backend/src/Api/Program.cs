@@ -4,6 +4,7 @@ using Api.Features.Deriva;
 using Api.Features.Events;
 using Api.Features.Missions;
 using Api.Features.Profile;
+using Api.Features.Users;
 using FluentValidation;
 using Microsoft.AspNetCore.HttpOverrides;
 using Infrastructure;
@@ -160,6 +161,7 @@ app.MapDerivaEndpoints();
 app.MapMissionEndpoints();
 app.MapProfileEndpoints();
 app.MapChatEndpoints();
+app.MapUserEndpoints();
 
 // SignalR hub
 app.MapHub<EventHub>("/hubs/events");
