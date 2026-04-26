@@ -17,7 +17,7 @@ final _mockMsg = ChatMessageModel(
   id: 'msg-1',
   eventId: 'event-1',
   senderId: 'user-1',
-  senderEmail: 'alice@test.com',
+  senderUsername: 'alice',
   content: 'hola',
   sentAt: _now,
 );
@@ -29,6 +29,7 @@ void main() {
   setUp(() {
     repo = MockChatRepository();
     signalR = MockSignalRService();
+    when(() => signalR.isConnected).thenReturn(true);
     when(() => signalR.events).thenAnswer((_) => const Stream.empty());
     when(() => signalR.joinEvent(any())).thenAnswer((_) async {});
     when(() => signalR.leaveEvent(any())).thenAnswer((_) async {});
@@ -68,7 +69,7 @@ void main() {
             id: 'msg-2',
             eventId: 'event-1',
             senderId: 'user-2',
-            senderEmail: 'bob@test.com',
+            senderUsername: 'bob',
             content: 'buenas',
             sentAt: _now,
           )));

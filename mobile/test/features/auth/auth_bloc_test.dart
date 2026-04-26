@@ -61,6 +61,7 @@ void main() {
         token: 'jwt-token',
         userId: 'uid-1',
         email: 'test@test.com',
+        username: '',
       )),
       expect: () => [
         isA<AuthAuthenticated>(),

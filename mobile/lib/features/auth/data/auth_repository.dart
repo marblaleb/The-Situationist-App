@@ -20,7 +20,8 @@ class AuthRepository implements IAuthRepository {
     final userId = _authService.extractUserId(token);
     final email = _authService.extractEmail(token);
     if (userId == null || email == null) return null;
-    return AuthUserModel(userId: userId, email: email, provider: 'Google');
+    final username = _authService.extractUsername(token);
+    return AuthUserModel(userId: userId, email: email, provider: 'Google', username: username);
   }
 
   @override

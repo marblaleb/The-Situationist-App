@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/i_auth_repository.dart';
@@ -14,15 +15,17 @@ class AuthLoginCompleted extends AuthEvent {
   final String token;
   final String userId;
   final String email;
+  final String username;
 
   AuthLoginCompleted({
     required this.token,
     required this.userId,
     required this.email,
+    required this.username,
   });
 
   @override
-  List<Object?> get props => [token, userId, email];
+  List<Object?> get props => [token, userId, email, username];
 }
 
 class AuthLogoutRequested extends AuthEvent {
@@ -47,6 +50,15 @@ class AuthWebCallbackReceived extends AuthEvent {
   List<Object?> get props => [token];
 }
 
+/// Fired after a username is set or changed — saves new JWT and refreshes state.
+class AuthUsernameUpdated extends AuthEvent {
+  final String token;
+  AuthUsernameUpdated({required this.token});
+
+  @override
+  List<Object?> get props => [token];
+}
+
 // States
 abstract class AuthState extends Equatable {}
 
@@ -63,11 +75,12 @@ class AuthLoading extends AuthState {
 class AuthAuthenticated extends AuthState {
   final String userId;
   final String email;
+  final String username;
 
-  AuthAuthenticated({required this.userId, required this.email});
+  AuthAuthenticated({required this.userId, required this.email, required this.username});
 
   @override
-  List<Object?> get props => [userId, email];
+  List<Object?> get props => [userId, email, username];
 }
 
 class AuthUnauthenticated extends AuthState {
@@ -94,6 +107,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginCompleted>(_onLoginCompleted);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthWebCallbackReceived>(_onWebCallbackReceived);
+    on<AuthUsernameUpdated>(_onUsernameUpdated);
     on<AuthErrorOccurred>((event, emit) => emit(AuthError(event.message)));
   }
 
@@ -105,7 +119,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await _repository.getCurrentUser();
       if (user != null) {
-        emit(AuthAuthenticated(userId: user.userId, email: user.email));
+        emit(AuthAuthenticated(userId: user.userId, email: user.email, username: user.username));
       } else {
         emit(AuthUnauthenticated());
       }
@@ -123,7 +137,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       userId: event.userId,
       email: event.email,
     );
-    emit(AuthAuthenticated(userId: event.userId, email: event.email));
+    emit(AuthAuthenticated(userId: event.userId, email: event.email, username: event.username));
   }
 
   Future<void> _onLogoutRequested(
@@ -140,17 +154,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      // Save token first; saveSession implementation only uses the token field.
       await _repository.saveSession(token: event.token, userId: '', email: '');
-      // Now decode userId/email from the saved token.
       final user = await _repository.getCurrentUser();
       if (user != null) {
-        emit(AuthAuthenticated(userId: user.userId, email: user.email));
+        emit(AuthAuthenticated(userId: user.userId, email: user.email, username: user.username));
       } else {
         emit(AuthUnauthenticated());
       }
     } catch (e) {
       emit(AuthError(e.toString()));
+    }
+  }
+
+  Future<void> _onUsernameUpdated(
+    AuthUsernameUpdated event,
+    Emitter<AuthState> emit,
+  ) async {
+    await _repository.saveSession(token: event.token, userId: '', email: '');
+    final user = await _repository.getCurrentUser();
+    if (user != null) {
+      emit(AuthAuthenticated(userId: user.userId, email: user.email, username: user.username));
     }
   }
 }

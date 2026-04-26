@@ -21,6 +21,7 @@ class AuthUserModel with _$AuthUserModel {
     required String userId,
     required String email,
     required String provider,
+    @Default('') String username,
   }) = _AuthUserModel;
 
   factory AuthUserModel.fromJson(Map<String, dynamic> json) =>

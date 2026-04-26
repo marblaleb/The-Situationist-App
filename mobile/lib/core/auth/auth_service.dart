@@ -60,6 +60,15 @@ class AuthService {
     }
   }
 
+  String extractUsername(String token) {
+    try {
+      final claims = _decodeClaims(token);
+      return (claims['username'] as String?) ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   DateTime _extractExp(String token) {
     final claims = _decodeClaims(token);
     final exp = claims['exp'] as int;
