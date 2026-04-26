@@ -4,6 +4,6 @@ public record ChatMessageDto(
     Guid Id,
     Guid EventId,
     Guid SenderId,
-    string SenderEmail,
+    string SenderUsername,
     string Content,
     DateTimeOffset SentAt);

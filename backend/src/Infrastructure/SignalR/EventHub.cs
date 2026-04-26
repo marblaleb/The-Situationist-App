@@ -54,7 +54,7 @@ public class EventHub(AppDbContext db) : Hub
             message.Id,
             message.EventId,
             userId,
-            user.Email,
+            user.Username ?? user.Email,
             message.Content,
             message.SentAt);
 

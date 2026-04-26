@@ -21,7 +21,7 @@ public class GetChatMessagesQueryHandler(AppDbContext db)
             .Take(50)
             .Select(m => new ChatMessageDto(
                 m.Id, m.EventId, m.SenderId,
-                m.Sender.Email, m.Content, m.SentAt))
+                m.Sender.Username ?? m.Sender.Email, m.Content, m.SentAt))
             .ToListAsync(ct);
 
         messages.Reverse(); // oldest first for display
