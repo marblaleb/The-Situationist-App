@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' show sin, cos, sqrt, atan2, pi;
+import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/location/location_service.dart';
@@ -183,17 +184,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         radius: 1000,
       );
       final clusters = _clusterEvents(events);
-      emit(MapReady(lat: lat, lng: lng, events: events, clusters: clusters));
-      // SignalR is optional — failure must not overwrite the working map state
+      // Connect SignalR before emitting MapReady so joinEvent() calls from
+      // ChatBloc don't race against a not-yet-connected hub.
       try {
         await _signalRService.disconnect();
-        await _signalRService.connect();
+        await _signalRService.connect().timeout(const Duration(seconds: 5));
         await _signalRService.joinZone(lat, lng);
         _signalRSubscription = _signalRService.events.listen((e) {
           if (e is EventExpiredSignal) add(_MapEventExpired(e.eventId));
           if (e is EventFullSignal) add(_MapEventFull(e.eventId));
         });
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[MapBloc] SignalR connect FAILED: $e');
+      }
+      emit(MapReady(lat: lat, lng: lng, events: events, clusters: clusters));
     } catch (e) {
       emit(MapError(e.toString()));
     }

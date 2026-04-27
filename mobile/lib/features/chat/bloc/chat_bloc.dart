@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/realtime/signalr_service.dart';
 import '../../../shared/models/chat_message_model.dart';
@@ -78,11 +79,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onStarted(ChatStarted event, Emitter<ChatState> emit) async {
     emit(ChatLoading());
+
+    // Load message history via REST — this always runs first.
     try {
       final messages = await _repository.getMessages(event.eventId);
       emit(ChatLoaded(eventId: event.eventId, messages: messages));
-      // Subscribe before joining so messages emitted during join are not missed
-      // (broadcast streams do not buffer for late subscribers).
+    } catch (e) {
+      emit(ChatError(e.toString()));
+      return;
+    }
+
+    // Establish SignalR for real-time messaging. If MapBloc already connected
+    // (isConnected == true) we skip reconnection. Otherwise we try here with a
+    // longer timeout to survive Render.com cold-starts (which can exceed 5 s).
+    try {
+      if (!_signalRService.isConnected) {
+        await _signalRService.connect().timeout(const Duration(seconds: 20));
+      }
+      // Subscribe before joining so no messages are lost during group join.
       _signalRSub = _signalRService.events.listen((e) {
         if (e is ChatMessageSignal && e.message.eventId == event.eventId) {
           add(_ChatMessageReceived(e.message));
@@ -90,7 +104,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       });
       await _signalRService.joinEvent(event.eventId);
     } catch (e) {
-      emit(ChatError(e.toString()));
+      // Real-time unavailable — messages are still visible, sending will be a no-op.
+      debugPrint('[ChatBloc] SignalR unavailable: $e');
     }
   }
 

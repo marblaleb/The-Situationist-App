@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dart_geohash/dart_geohash.dart';
+import 'package:flutter/foundation.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../auth/auth_service.dart';
 import '../../shared/models/chat_message_model.dart';
@@ -34,13 +35,19 @@ class SignalRService {
 
   Stream<SignalREvent> get events => _controller.stream;
 
+  bool get isConnected => _connection?.state == HubConnectionState.Connected;
+
   Future<void> connect() async {
+    if (isConnected) return;
+
+    debugPrint('[SignalR] connecting…');
     _connection = HubConnectionBuilder()
         .withUrl(
           _hubUrl,
           options: HttpConnectionOptions(
             accessTokenFactory: () async =>
                 await _authService.getToken() ?? '',
+            requestTimeout: 30000,
           ),
         )
         .withAutomaticReconnect()
@@ -63,14 +70,17 @@ class SignalRService {
         final msg = ChatMessageModel.fromJson(
             Map<String, dynamic>.from(data as Map));
         _controller.add(ChatMessageSignal(msg));
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('[SignalR] ReceiveMessage parse error: $e\n$st');
+      }
     });
 
     await _connection!.start();
+    debugPrint('[SignalR] connected');
   }
 
   Future<void> joinZone(double lat, double lng) async {
-    if (_connection?.state != HubConnectionState.Connected) return;
+    if (!isConnected) return;
     final geohash = GeoHasher().encode(lng, lat, precision: 5);
     if (geohash == _currentZone) return;
     _currentZone = geohash;
@@ -78,17 +88,17 @@ class SignalRService {
   }
 
   Future<void> joinEvent(String eventId) async {
-    if (_connection?.state != HubConnectionState.Connected) return;
+    if (!isConnected) return;
     await _connection!.invoke('JoinEvent', args: [eventId]);
   }
 
   Future<void> leaveEvent(String eventId) async {
-    if (_connection?.state != HubConnectionState.Connected) return;
+    if (!isConnected) return;
     await _connection!.invoke('LeaveEvent', args: [eventId]);
   }
 
   Future<void> sendMessage(String eventId, String content) async {
-    if (_connection?.state != HubConnectionState.Connected) return;
+    if (!isConnected) return;
     await _connection!.invoke('SendMessage', args: [eventId, content]);
   }
 
