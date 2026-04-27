@@ -48,7 +48,31 @@ public static class AuthEndpoints
             if (state is not null && state.StartsWith("web:"))
             {
                 var webCallback = Uri.UnescapeDataString(state[4..]);
-                return Results.Redirect($"{webCallback}?token={Uri.EscapeDataString(result.AccessToken)}");
+                var redirectUrl = $"{webCallback}?token={Uri.EscapeDataString(result.AccessToken)}";
+
+                // Mobile custom-scheme callbacks (e.g. app.situationist://): serve an HTML page
+                // with a meta-refresh instead of a bare 302. Chrome Custom Tab will load the page,
+                // fire the intent for the custom scheme, and close the tab cleanly rather than
+                // staying stuck in a loading state.
+                if (!webCallback.StartsWith("https://") && !webCallback.StartsWith("http://"))
+                {
+                    var html = $"""
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <meta charset="utf-8">
+                          <meta http-equiv="refresh" content="0;url={redirectUrl}">
+                        </head>
+                        <body>
+                          <p>Autenticación completada. Volviendo a la aplicación...</p>
+                          <script>window.location.replace('{redirectUrl}');</script>
+                        </body>
+                        </html>
+                        """;
+                    return Results.Content(html, "text/html");
+                }
+
+                return Results.Redirect(redirectUrl);
             }
 
             return Results.Ok(result);
