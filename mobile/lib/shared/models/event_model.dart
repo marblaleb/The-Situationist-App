@@ -20,6 +20,7 @@ class EventModel with _$EventModel {
     required DateTime expiresAt,
     required String status,
     required int participantCount,
+    @Default(false) bool isParticipant,
   }) = _EventModel;
 
   factory EventModel.fromJson(Map<String, dynamic> json) =>

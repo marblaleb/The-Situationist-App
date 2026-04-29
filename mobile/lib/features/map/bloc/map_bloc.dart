@@ -91,6 +91,13 @@ class MapEventAdded extends MapEvent {
   List<Object?> get props => [event];
 }
 
+class MapEventParticipated extends MapEvent {
+  final String eventId;
+  MapEventParticipated(this.eventId);
+  @override
+  List<Object?> get props => [eventId];
+}
+
 abstract class MapState extends Equatable {}
 
 class MapLoading extends MapState {
@@ -167,6 +174,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<_MapEventExpired>(_onExpired);
     on<_MapEventFull>(_onFull);
     on<MapEventAdded>(_onEventAdded);
+    on<MapEventParticipated>(_onEventParticipated);
   }
 
   Future<void> _onInitialized(
@@ -249,6 +257,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     if (state is! MapReady) return;
     final s = state as MapReady;
     final updated = [...s.events, event.event];
+    emit(s.copyWith(events: updated, clusters: _clusterEvents(updated)));
+  }
+
+  void _onEventParticipated(MapEventParticipated event, Emitter<MapState> emit) {
+    if (state is! MapReady) return;
+    final s = state as MapReady;
+    final updated = s.events.map((e) {
+      return e.id == event.eventId ? e.copyWith(isParticipant: true) : e;
+    }).toList();
     emit(s.copyWith(events: updated, clusters: _clusterEvents(updated)));
   }
 

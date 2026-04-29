@@ -85,6 +85,24 @@ class EventsError extends EventsState {
   List<Object?> get props => [message];
 }
 
+class EventsParticipating extends EventsState {
+  final String eventId;
+
+  EventsParticipating(this.eventId);
+
+  @override
+  List<Object?> get props => [eventId];
+}
+
+class EventParticipationSucceeded extends EventsState {
+  final String eventId;
+
+  EventParticipationSucceeded(this.eventId);
+
+  @override
+  List<Object?> get props => [eventId];
+}
+
 // BLoC
 class EventsBloc extends Bloc<EventsEvent, EventsState> {
   final IEventsRepository _repository;
@@ -120,11 +138,13 @@ class EventsBloc extends Bloc<EventsEvent, EventsState> {
     EventParticipateRequested event,
     Emitter<EventsState> emit,
   ) async {
+    emit(EventsParticipating(event.eventId));
     try {
       await _repository.participate(
         eventId: event.eventId,
         role: event.role,
       );
+      emit(EventParticipationSucceeded(event.eventId));
     } catch (e) {
       emit(EventsError(e.toString()));
     }

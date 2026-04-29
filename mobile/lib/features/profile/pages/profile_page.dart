@@ -43,6 +43,7 @@ class _ProfileViewState extends State<_ProfileView> {
   bool? _usernameAvailable;
   bool _usernameChecking = false;
   bool _usernameSaving = false;
+  bool _loggingOut = false;
   String? _usernameError;
 
   static final _regex = RegExp(r'^[a-zA-Z][a-zA-Z0-9_]{2,19}$');
@@ -305,9 +306,13 @@ class _ProfileViewState extends State<_ProfileView> {
         Container(height: 1, color: AppColors.fgMuted),
         const SizedBox(height: 16),
         VoidButton(
-          label: 'CERRAR SESIÓN',
-          onPressed: () =>
-              context.read<AuthBloc>().add(AuthLogoutRequested()),
+          label: _loggingOut ? '...' : 'CERRAR SESIÓN',
+          onPressed: _loggingOut
+              ? null
+              : () {
+                  setState(() => _loggingOut = true);
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                },
         ),
         const SizedBox(height: 16),
       ],

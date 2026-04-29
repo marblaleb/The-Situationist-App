@@ -28,127 +28,151 @@ class EventDetailSheet extends StatelessWidget {
     final statusColor =
         event.status == 'Active' ? AppColors.phosphor : AppColors.fgSecondary;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.4,
-      minChildSize: 0.2,
-      maxChildSize: 0.7,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface,
-            border: Border(top: BorderSide(color: borderColor, width: 1)),
-          ),
-          child: ListView(
-            controller: scrollController,
-            padding: const EdgeInsets.all(16),
-            children: [
-              Center(
-                child: Container(
-                    width: 40, height: 2, color: AppColors.fgMuted),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      event.title.toUpperCase(),
-                      style: AppTextStyles.monoDisplay.copyWith(fontSize: 14),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      _BlinkDot(color: statusColor),
-                      const SizedBox(width: 6),
-                      MonoText(
-                        event.status.toUpperCase(),
-                        color: statusColor,
-                        size: 11,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(height: 1, color: AppColors.fgMuted),
-              const SizedBox(height: 12),
-              MonoText(
-                '${event.actionType} · ${event.interventionLevel} · hasta ${event.expiresAt.toTimeOnly()}',
-                color: AppColors.fgSecondary,
-                size: 11,
-              ),
-              const SizedBox(height: 16),
-              Text(event.description, style: AppTextStyles.body),
-              const SizedBox(height: 16),
-              () {
-                final current =
-                    event.participantCount.toString().padLeft(2, '0');
-                final max = event.maxParticipants != null
-                    ? ' / ${event.maxParticipants.toString().padLeft(2, '0')}'
-                    : '';
-                return MonoText(
-                  'participantes: $current$max',
-                  color: AppColors.fgSecondary,
-                );
-              }(),
-              const SizedBox(height: 16),
-              Builder(builder: (context) {
-                final isFull = event.status == 'Full';
-                final isExpired =
-                    event.expiresAt.isBefore(DateTime.now().toUtc());
-                final disabled = isFull || isExpired;
-                final authState = context.watch<AuthBloc>().state;
-                final isCreator = authState is AuthAuthenticated &&
-                    authState.userId == event.creatorId;
-
-                if (isCreator) {
-                  return VoidButton(
-                    label: 'CANCELAR EVENTO',
-                    borderColor: AppColors.danger,
-                    onPressed: () {
-                      context.read<EventsBloc>().add(
-                            EventCancelRequested(eventId: event.id),
-                          );
-                      context.read<MapBloc>().add(MapEventSelected(null));
-                    },
-                  );
-                }
-
-                return VoidButton(
-                  label: 'PARTICIPAR',
-                  onPressed: disabled
-                      ? null
-                      : () => context.read<EventsBloc>().add(
-                            EventParticipateRequested(
-                              eventId: event.id,
-                              role: 'Participante',
-                            ),
-                          ),
-                );
-              }),
-              const SizedBox(height: 8),
-              BlocBuilder<EventsBloc, EventsState>(
-                builder: (ctx, state) {
-                  if (state is EventsError) {
-                    return MonoText(state.message,
-                        color: AppColors.fgSecondary);
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              const SizedBox(height: 8),
-              VoidButton(
-                label: 'CHAT',
-                borderColor: AppColors.electricBlue,
-                onPressed: () => context.push(
-                  '/home/events/${event.id}/chat',
-                  extra: event.title,
-                ),
-              ),
-            ],
-          ),
-        );
+    return BlocListener<EventsBloc, EventsState>(
+      listener: (context, state) {
+        if (state is EventParticipationSucceeded && state.eventId == event.id) {
+          context.read<MapBloc>().add(MapEventParticipated(state.eventId));
+        }
       },
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.4,
+        minChildSize: 0.2,
+        maxChildSize: 0.7,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: AppColors.bgSurface,
+              border: Border(top: BorderSide(color: borderColor, width: 1)),
+            ),
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(16),
+              children: [
+                Center(
+                  child: Container(
+                      width: 40, height: 2, color: AppColors.fgMuted),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.title.toUpperCase(),
+                        style: AppTextStyles.monoDisplay.copyWith(fontSize: 14),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        _BlinkDot(color: statusColor),
+                        const SizedBox(width: 6),
+                        MonoText(
+                          event.status.toUpperCase(),
+                          color: statusColor,
+                          size: 11,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(height: 1, color: AppColors.fgMuted),
+                const SizedBox(height: 12),
+                MonoText(
+                  '${event.actionType} · ${event.interventionLevel} · hasta ${event.expiresAt.toTimeOnly()}',
+                  color: AppColors.fgSecondary,
+                  size: 11,
+                ),
+                const SizedBox(height: 16),
+                Text(event.description, style: AppTextStyles.body),
+                const SizedBox(height: 16),
+                () {
+                  final current =
+                      event.participantCount.toString().padLeft(2, '0');
+                  final max = event.maxParticipants != null
+                      ? ' / ${event.maxParticipants.toString().padLeft(2, '0')}'
+                      : '';
+                  return MonoText(
+                    'participantes: $current$max',
+                    color: AppColors.fgSecondary,
+                  );
+                }(),
+                const SizedBox(height: 16),
+                BlocBuilder<EventsBloc, EventsState>(
+                  builder: (context, eventsState) {
+                    final authState = context.watch<AuthBloc>().state;
+                    final isCreator = authState is AuthAuthenticated &&
+                        authState.userId == event.creatorId;
+                    final isParticipating = eventsState is EventsParticipating &&
+                        eventsState.eventId == event.id;
+
+                    if (isCreator) {
+                      return VoidButton(
+                        label: 'CANCELAR EVENTO',
+                        borderColor: AppColors.danger,
+                        onPressed: () {
+                          context.read<EventsBloc>().add(
+                                EventCancelRequested(eventId: event.id),
+                              );
+                          context.read<MapBloc>().add(MapEventSelected(null));
+                        },
+                      );
+                    }
+
+                    if (!event.isParticipant) {
+                      final isFull = event.status == 'Full';
+                      final isExpired =
+                          event.expiresAt.isBefore(DateTime.now().toUtc());
+                      return VoidButton(
+                        label: isParticipating ? '...' : 'PARTICIPAR',
+                        onPressed: (isFull || isExpired || isParticipating)
+                            ? null
+                            : () => context.read<EventsBloc>().add(
+                                  EventParticipateRequested(
+                                    eventId: event.id,
+                                    role: 'Participante',
+                                  ),
+                                ),
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
+                ),
+                BlocBuilder<EventsBloc, EventsState>(
+                  builder: (ctx, state) {
+                    if (state is EventsError) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: MonoText(state.message, color: AppColors.danger, size: 11),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                Builder(builder: (context) {
+                  final authState = context.watch<AuthBloc>().state;
+                  final isCreator = authState is AuthAuthenticated &&
+                      authState.userId == event.creatorId;
+                  final canChat = event.isParticipant || isCreator;
+                  if (!canChat) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: VoidButton(
+                      label: 'CHAT',
+                      borderColor: AppColors.electricBlue,
+                      onPressed: () => context.push(
+                        '/home/events/${event.id}/chat',
+                        extra: event.title,
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

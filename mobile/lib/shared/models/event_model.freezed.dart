@@ -35,6 +35,7 @@ mixin _$EventModel {
   DateTime get expiresAt => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   int get participantCount => throw _privateConstructorUsedError;
+  bool get isParticipant => throw _privateConstructorUsedError;
 
   /// Serializes this EventModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -67,7 +68,8 @@ abstract class $EventModelCopyWith<$Res> {
       DateTime startsAt,
       DateTime expiresAt,
       String status,
-      int participantCount});
+      int participantCount,
+      bool isParticipant});
 }
 
 /// @nodoc
@@ -100,6 +102,7 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
     Object? expiresAt = null,
     Object? status = null,
     Object? participantCount = null,
+    Object? isParticipant = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -162,6 +165,10 @@ class _$EventModelCopyWithImpl<$Res, $Val extends EventModel>
           ? _value.participantCount
           : participantCount // ignore: cast_nullable_to_non_nullable
               as int,
+      isParticipant: null == isParticipant
+          ? _value.isParticipant
+          : isParticipant // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -189,7 +196,8 @@ abstract class _$$EventModelImplCopyWith<$Res>
       DateTime startsAt,
       DateTime expiresAt,
       String status,
-      int participantCount});
+      int participantCount,
+      bool isParticipant});
 }
 
 /// @nodoc
@@ -220,6 +228,7 @@ class __$$EventModelImplCopyWithImpl<$Res>
     Object? expiresAt = null,
     Object? status = null,
     Object? participantCount = null,
+    Object? isParticipant = null,
   }) {
     return _then(_$EventModelImpl(
       id: null == id
@@ -282,6 +291,10 @@ class __$$EventModelImplCopyWithImpl<$Res>
           ? _value.participantCount
           : participantCount // ignore: cast_nullable_to_non_nullable
               as int,
+      isParticipant: null == isParticipant
+          ? _value.isParticipant
+          : isParticipant // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -304,7 +317,8 @@ class _$EventModelImpl implements _EventModel {
       required this.startsAt,
       required this.expiresAt,
       required this.status,
-      required this.participantCount});
+      required this.participantCount,
+      this.isParticipant = false});
 
   factory _$EventModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$EventModelImplFromJson(json);
@@ -339,10 +353,13 @@ class _$EventModelImpl implements _EventModel {
   final String status;
   @override
   final int participantCount;
+  @override
+  @JsonKey()
+  final bool isParticipant;
 
   @override
   String toString() {
-    return 'EventModel(id: $id, creatorId: $creatorId, title: $title, description: $description, actionType: $actionType, interventionLevel: $interventionLevel, centroidLatitude: $centroidLatitude, centroidLongitude: $centroidLongitude, radiusMeters: $radiusMeters, visibility: $visibility, maxParticipants: $maxParticipants, startsAt: $startsAt, expiresAt: $expiresAt, status: $status, participantCount: $participantCount)';
+    return 'EventModel(id: $id, creatorId: $creatorId, title: $title, description: $description, actionType: $actionType, interventionLevel: $interventionLevel, centroidLatitude: $centroidLatitude, centroidLongitude: $centroidLongitude, radiusMeters: $radiusMeters, visibility: $visibility, maxParticipants: $maxParticipants, startsAt: $startsAt, expiresAt: $expiresAt, status: $status, participantCount: $participantCount, isParticipant: $isParticipant)';
   }
 
   @override
@@ -376,7 +393,9 @@ class _$EventModelImpl implements _EventModel {
                 other.expiresAt == expiresAt) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.participantCount, participantCount) ||
-                other.participantCount == participantCount));
+                other.participantCount == participantCount) &&
+            (identical(other.isParticipant, isParticipant) ||
+                other.isParticipant == isParticipant));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -397,7 +416,8 @@ class _$EventModelImpl implements _EventModel {
       startsAt,
       expiresAt,
       status,
-      participantCount);
+      participantCount,
+      isParticipant);
 
   /// Create a copy of EventModel
   /// with the given fields replaced by the non-null parameter values.
@@ -431,7 +451,8 @@ abstract class _EventModel implements EventModel {
       required final DateTime startsAt,
       required final DateTime expiresAt,
       required final String status,
-      required final int participantCount}) = _$EventModelImpl;
+      required final int participantCount,
+      final bool isParticipant}) = _$EventModelImpl;
 
   factory _EventModel.fromJson(Map<String, dynamic> json) =
       _$EventModelImpl.fromJson;
@@ -466,6 +487,8 @@ abstract class _EventModel implements EventModel {
   String get status;
   @override
   int get participantCount;
+  @override
+  bool get isParticipant;
 
   /// Create a copy of EventModel
   /// with the given fields replaced by the non-null parameter values.

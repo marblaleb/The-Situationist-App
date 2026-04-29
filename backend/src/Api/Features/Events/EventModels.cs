@@ -28,7 +28,8 @@ public record EventResponse(
     DateTimeOffset StartsAt,
     DateTimeOffset ExpiresAt,
     string Status,
-    int ParticipantCount);
+    int ParticipantCount,
+    bool IsParticipant);
 
 public record GenerateEventRequest(string ActionType, string InterventionLevel, double? Latitude, double? Longitude);
 

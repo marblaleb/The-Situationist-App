@@ -6,7 +6,7 @@ using NetTopologySuite.Geometries;
 
 namespace Api.Features.Events;
 
-public record GetNearbyEventsQuery(double Latitude, double Longitude, int RadiusMeters) : IRequest<List<EventResponse>>;
+public record GetNearbyEventsQuery(double Latitude, double Longitude, int RadiusMeters, Guid UserId) : IRequest<List<EventResponse>>;
 
 public class GetNearbyEventsQueryHandler(AppDbContext db) : IRequestHandler<GetNearbyEventsQuery, List<EventResponse>>
 {
@@ -29,7 +29,8 @@ public class GetNearbyEventsQueryHandler(AppDbContext db) : IRequestHandler<GetN
         return events
             .Select(e => EventHelpers.MapToResponse(
                 e,
-                e.Participations.Count(p => p.Role == ParticipationRole.Participante)))
+                e.Participations.Count(p => p.Role == ParticipationRole.Participante),
+                isParticipant: e.Participations.Any(p => p.UserId == request.UserId)))
             .ToList();
     }
 }

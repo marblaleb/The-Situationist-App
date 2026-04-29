@@ -43,9 +43,11 @@ public static class EventEndpoints
             [FromQuery] double lat,
             [FromQuery] double lng,
             [FromQuery] int radius,
+            ClaimsPrincipal principal,
             ISender mediator) =>
         {
-            var result = await mediator.Send(new GetNearbyEventsQuery(lat, lng, radius));
+            var userId = Guid.Parse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+            var result = await mediator.Send(new GetNearbyEventsQuery(lat, lng, radius, userId));
             return Results.Ok(result);
         });
 

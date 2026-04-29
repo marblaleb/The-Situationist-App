@@ -23,6 +23,7 @@ _$EventModelImpl _$$EventModelImplFromJson(Map<String, dynamic> json) =>
       expiresAt: DateTime.parse(json['expiresAt'] as String),
       status: json['status'] as String,
       participantCount: (json['participantCount'] as num).toInt(),
+      isParticipant: json['isParticipant'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$EventModelImplToJson(_$EventModelImpl instance) =>
@@ -42,6 +43,7 @@ Map<String, dynamic> _$$EventModelImplToJson(_$EventModelImpl instance) =>
       'expiresAt': instance.expiresAt.toIso8601String(),
       'status': instance.status,
       'participantCount': instance.participantCount,
+      'isParticipant': instance.isParticipant,
     };
 
 _$CreateEventRequestImpl _$$CreateEventRequestImplFromJson(
