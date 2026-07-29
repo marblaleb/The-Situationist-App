@@ -116,3 +116,6 @@ $RECYCLE.BIN/
 
 # Claude session data
 .claude/
+
+# Git worktrees (superpowers workflow)
+.worktrees/
