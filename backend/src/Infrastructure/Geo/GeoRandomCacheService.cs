@@ -11,7 +11,7 @@ public interface IGeoRandomCacheService
 
 public class GeoRandomCacheService(IRedisCacheService cache, IOverpassClient overpass) : IGeoRandomCacheService
 {
-    private const int FetchRadiusMeters = 8500;
+    private const int FetchRadiusMeters = 9000;
     private static readonly TimeSpan CacheTtl = TimeSpan.FromDays(7);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

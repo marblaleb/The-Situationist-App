@@ -62,6 +62,6 @@ public class GeoRandomCacheServiceTests
         await service.GetOrFetchAsync(requestLat, requestLng);
 
         await overpass.Received(1).FetchAsync(
-            expectedCellCenter.Lat, expectedCellCenter.Lon, 8500, Arg.Any<CancellationToken>());
+            expectedCellCenter.Lat, expectedCellCenter.Lon, 9000, Arg.Any<CancellationToken>());
     }
 }
