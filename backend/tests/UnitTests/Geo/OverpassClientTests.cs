@@ -65,6 +65,62 @@ public class OverpassClientTests
     }
 
     [Fact]
+    public async Task FetchAsync_FiltersNullGeometryPoints_KeepsRingWhenEnoughValidPointsRemain()
+    {
+        const string poisJson = """{ "elements": [] }""";
+        const string exclusionsJson = """
+        {
+          "elements": [
+            {
+              "type": "way",
+              "tags": { "natural": "water" },
+              "geometry": [
+                { "lat": 40.40, "lon": -3.70 },
+                null,
+                { "lat": 40.41, "lon": -3.71 },
+                { "lat": 40.42, "lon": -3.72 },
+                { "lat": 40.40, "lon": -3.70 }
+              ]
+            }
+          ]
+        }
+        """;
+
+        var client = new OverpassClient(CreateClient(poisJson, exclusionsJson));
+        var result = await client.FetchAsync(40.4168, -3.7038, 2000);
+
+        result.ExclusionRings.Should().HaveCount(1);
+        result.ExclusionRings[0].Points.Should().HaveCount(4);
+        result.ExclusionRings[0].Points.Should().NotContainNulls();
+    }
+
+    [Fact]
+    public async Task FetchAsync_SkipsRing_WhenNullGeometryPointsDropBelowMinimum()
+    {
+        const string poisJson = """{ "elements": [] }""";
+        const string exclusionsJson = """
+        {
+          "elements": [
+            {
+              "type": "way",
+              "tags": { "natural": "water" },
+              "geometry": [
+                { "lat": 40.40, "lon": -3.70 },
+                null,
+                { "lat": 40.41, "lon": -3.71 }
+              ]
+            }
+          ]
+        }
+        """;
+
+        var client = new OverpassClient(CreateClient(poisJson, exclusionsJson));
+        var result = await client.FetchAsync(40.4168, -3.7038, 2000);
+
+        result.ExclusionRings.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task FetchAsync_Throws_WhenOverpassReturnsError()
     {
         var handler = new FailingHttpMessageHandler();
@@ -78,18 +134,18 @@ public class OverpassClientTests
 
 file class FakeHttpMessageHandler(string poisResponse, string exclusionsResponse) : HttpMessageHandler
 {
-    private int _callCount;
-
-    protected override Task<HttpResponseMessage> SendAsync(
+    protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        _callCount++;
-        var body = _callCount == 1 ? poisResponse : exclusionsResponse;
-        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        // Route by query content rather than call order: FetchAsync now fires both
+        // Overpass requests concurrently, so arrival order at the handler is a race.
+        var requestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+        var isPoiQuery = requestBody.Contains("shop");
+        var body = isPoiQuery ? poisResponse : exclusionsResponse;
+        return new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(body, Encoding.UTF8, "application/json"),
         };
-        return Task.FromResult(response);
     }
 }
 

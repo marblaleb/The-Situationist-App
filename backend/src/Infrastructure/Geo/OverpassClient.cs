@@ -14,9 +14,10 @@ public class OverpassClient(HttpClient httpClient) : IOverpassClient
 
     public async Task<OverpassResult> FetchAsync(double lat, double lng, int radiusMeters, CancellationToken ct = default)
     {
-        var pois = await FetchPoisAsync(lat, lng, radiusMeters, ct);
-        var exclusions = await FetchExclusionsAsync(lat, lng, radiusMeters, ct);
-        return new OverpassResult(pois, exclusions);
+        var poisTask = FetchPoisAsync(lat, lng, radiusMeters, ct);
+        var exclusionsTask = FetchExclusionsAsync(lat, lng, radiusMeters, ct);
+        await Task.WhenAll(poisTask, exclusionsTask);
+        return new OverpassResult(await poisTask, await exclusionsTask);
     }
 
     private async Task<IReadOnlyList<PoiPoint>> FetchPoisAsync(double lat, double lng, int radiusMeters, CancellationToken ct)
@@ -65,9 +66,14 @@ public class OverpassClient(HttpClient httpClient) : IOverpassClient
         var rings = new List<ExclusionRing>();
         foreach (var element in response.Elements)
         {
-            if (element.Type != "way" || element.Geometry is null || element.Geometry.Count < 3)
+            if (element.Type != "way" || element.Geometry is null)
                 continue;
-            var points = element.Geometry.Select(g => new GeoCoordinate(g.Lat, g.Lon)).ToList();
+            var points = element.Geometry
+                .Where(g => g is not null)
+                .Select(g => new GeoCoordinate(g!.Lat, g.Lon))
+                .ToList();
+            if (points.Count < 3)
+                continue;
             rings.Add(new ExclusionRing(points));
         }
         return rings;
