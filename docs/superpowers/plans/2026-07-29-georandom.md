@@ -12,9 +12,9 @@
 
 ---
 
-## Known MVP simplification (documented, not a bug)
+## Cache key vs. fetch radius (corrected during Task 5's review)
 
-The Overpass cache key is `georandom:overpass:{geohash-5 of origin}`, but each fetch queries a fixed 5500m radius **around the raw request origin**, not around the geohash cell's center. Two requests that land in the same geohash-5 cell but are several km apart (e.g. near opposite corners of the cell) will each trigger their own Overpass fetch instead of sharing one cache entry. This is a cache-efficiency gap, not a correctness bug — each individual fetch is always large enough (5500m) to fully cover that request's own search radius (max 5000m). Acceptable for MVP; revisit if Overpass load becomes a problem.
+The Overpass cache key is `georandom:overpass:{geohash-5 of origin}`. Two requests whose origins land in the *same* geohash-5 cell always share the *same* cache entry — that's the point of the geohash key — but a geohash-5 cell's diagonal (~6.9km) is larger than a fetch anchored at just one raw request origin with a 5500m radius can guarantee to cover for a second requester near the opposite side of the same cell. To make the sharing actually safe, the Overpass fetch is anchored to the geohash cell's **decoded center** (not the raw request lat/lng), with the fetch radius widened to 8500m — large enough to cover the full cell extent (half-diagonal ~3.46km) plus the maximum user search radius (5000m) from any point within that cell. This guarantees any two requests sharing a cache entry are both fully covered by what was actually fetched.
 
 ---
 
