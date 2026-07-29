@@ -14,6 +14,7 @@ public class KdeCalculator(IRandomSource random)
     private const int CandidateCount = 3000;
     private const int MaxRetries = 10;
     private const double StdDevEpsilon = 1e-9;
+    private const int MaxPoiSampleSize = 3000;
 
     public (double Lat, double Lng) SelectPoint(
         double centerLat,
@@ -23,7 +24,11 @@ public class KdeCalculator(IRandomSource random)
         IReadOnlyList<PoiPoint> pois,
         IReadOnlyList<ExclusionRing> exclusionRings)
     {
-        var index = pois.Count > 0 ? BuildIndex(pois) : null;
+        var effectivePois = pois.Count > MaxPoiSampleSize
+            ? Shuffle(pois.ToList()).Take(MaxPoiSampleSize).ToList()
+            : pois;
+
+        var index = effectivePois.Count > 0 ? BuildIndex(effectivePois) : null;
         var candidates = new List<(double Lat, double Lng, double Density)>(CandidateCount);
         for (var i = 0; i < CandidateCount; i++)
         {
@@ -74,8 +79,7 @@ public class KdeCalculator(IRandomSource random)
         };
     }
 
-    private List<(double Lat, double Lng, double Density)> Shuffle(
-        List<(double Lat, double Lng, double Density)> items)
+    private List<T> Shuffle<T>(List<T> items)
     {
         var array = items.ToArray();
         for (var i = array.Length - 1; i > 0; i--)
@@ -110,11 +114,16 @@ public class KdeCalculator(IRandomSource random)
             lng - envelopeDegreesLng, lng + envelopeDegreesLng,
             lat - envelopeDegreesLat, lat + envelopeDegreesLat);
 
+        const double metersPerDegreeLat = 111_320.0;
+        var metersPerDegreeLng = metersPerDegreeLat * Math.Cos(lat * Math.PI / 180.0);
+
         double density = 0;
         foreach (var poi in index.Query(envelope))
         {
-            var distance = GeoMath.DistanceMeters(lat, lng, poi.Lat, poi.Lng);
-            density += Math.Exp(-(distance * distance) / (2 * BandwidthMeters * BandwidthMeters));
+            var dy = (poi.Lat - lat) * metersPerDegreeLat;
+            var dx = (poi.Lng - lng) * metersPerDegreeLng;
+            var distanceSquaredMeters = dx * dx + dy * dy;
+            density += Math.Exp(-distanceSquaredMeters / (2 * BandwidthMeters * BandwidthMeters));
         }
         return density;
     }
