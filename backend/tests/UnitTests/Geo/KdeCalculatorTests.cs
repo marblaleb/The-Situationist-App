@@ -120,4 +120,23 @@ public class KdeCalculatorTests
 
         act.Should().Throw<NoValidGeoRandomPointException>();
     }
+
+    [Fact]
+    public void DownsamplesLargePoiSets_AndStillDiscriminatesDensity()
+    {
+        const double clusterLat = 40.4200;
+        const double clusterLng = -3.7000;
+        var pois = ClusteredPois(clusterLat, clusterLng, count: 3500, spreadMeters: 60, seed: 1);
+        var calculator = new KdeCalculator(new SeededRandomSource(42));
+
+        var atractor = calculator.SelectPoint(
+            CenterLat, CenterLng, RadiusMeters, GeoRandomPointType.Atractor, pois, []);
+        var vacio = calculator.SelectPoint(
+            CenterLat, CenterLng, RadiusMeters, GeoRandomPointType.Vacio, pois, []);
+
+        var distAtractor = GeoMath.DistanceMeters(atractor.Lat, atractor.Lng, clusterLat, clusterLng);
+        var distVacio = GeoMath.DistanceMeters(vacio.Lat, vacio.Lng, clusterLat, clusterLng);
+
+        distAtractor.Should().BeLessThan(distVacio);
+    }
 }
