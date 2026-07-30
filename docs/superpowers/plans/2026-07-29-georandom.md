@@ -1898,7 +1898,9 @@ git commit -m "feat(georandom): add GeoRandomPage UI (radius slider, type select
 - Modify: `mobile/lib/app.dart`
 - Modify: `mobile/lib/features/map/pages/map_page.dart`
 
-- [ ] **Step 1: Register the bloc and route in `app.dart`**
+**Note — this step's `app.dart` wiring differs from an earlier plan draft, per Task 12's review:** the original draft registered `GeoRandomBloc` as an app-root singleton (a `late final` field on `_SituationistAppState`, alongside `_mapBloc`/`_derivaBloc`), the same pattern used for the persistent shell-tab features (Map/Deriva/Missions). But `/home/explore` is a standalone push/pop route, not a shell tab — an app-root singleton bloc would keep showing the *previous* generated point (`GeoRandomSuccess`) if the user pops back to the map and reopens "Explorar", instead of a fresh form. Fixed by provisioning `GeoRandomBloc` **per-route** instead (wrapped in a `BlocProvider` right in the `GoRoute` builder) — every push gets a fresh `GeoRandomIdle` state, and the bloc is disposed automatically on pop, no manual `close()` bookkeeping needed. This matches how `CreateEventBloc`/`CreateMissionBloc` are already scoped in this codebase (though those wrap the `BlocProvider` inside their own page's `build()` method rather than at the route level — either placement is behaviorally equivalent; wrapping at the route builder was chosen here specifically to avoid reopening the already-reviewed `GeoRandomPage`, which expects an ambient `GeoRandomBloc` via `context.read`/`BlocBuilder` and takes no constructor parameters).
+
+- [ ] **Step 1: Register the route in `app.dart`**
 
 Add imports near the other feature imports:
 
@@ -1908,41 +1910,22 @@ import 'features/georandom/data/georandom_repository.dart';
 import 'features/georandom/pages/georandom_page.dart';
 ```
 
-Add the bloc field next to `late final MapBloc _mapBloc;`:
-
-```dart
-  late final GeoRandomBloc _geoRandomBloc;
-```
-
-Initialize it in `initState`, right after `_mapBloc = MapBloc(...)`:
-
-```dart
-    _geoRandomBloc = GeoRandomBloc(
-      repository: GeoRandomRepository(_apiClient),
-      locationService: _locationService,
-    );
-```
-
 Add the route (outside the `StatefulShellRoute`, alongside `/home/create-event` etc.):
 
 ```dart
         GoRoute(
           path: '/home/explore',
-          builder: (_, __) => const GeoRandomPage(),
+          builder: (_, __) => BlocProvider(
+            create: (_) => GeoRandomBloc(
+              repository: GeoRandomRepository(_apiClient),
+              locationService: _locationService,
+            ),
+            child: const GeoRandomPage(),
+          ),
         ),
 ```
 
-Add disposal in `dispose()`:
-
-```dart
-    _geoRandomBloc.close();
-```
-
-Add the provider in `MultiBlocProvider.providers`:
-
-```dart
-          BlocProvider.value(value: _geoRandomBloc),
-```
+No new field on `_SituationistAppState`, no `initState`/`dispose` changes, no `MultiBlocProvider.providers` entry — the bloc is entirely scoped to this one route.
 
 - [ ] **Step 2: Add the entry button on `MapPage`**
 
