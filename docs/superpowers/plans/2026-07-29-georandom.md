@@ -1611,6 +1611,8 @@ git commit -m "feat(georandom): add GeoRandomBloc with permission-gated generati
 **Files:**
 - Create: `mobile/lib/features/georandom/pages/georandom_page.dart`
 
+**Note — one deviation from the code sample below, following on from Task 11's `GeoRandomPermissionRequired(status)` change:** the `GeoRandomPermissionRequired` copy block must differentiate its message by `state.status` (`denied`/`deniedForever`/`serviceDisabled`) instead of showing one blanket string — "activá el permiso e intentá de nuevo" is actively wrong advice for `deniedForever` (the OS won't re-prompt; the user needs system Settings) and for `serviceDisabled` (that's the device GPS toggle, not an app permission). See the actual committed file for the final version.
+
 - [ ] **Step 1: Implement the page**
 
 ```dart
