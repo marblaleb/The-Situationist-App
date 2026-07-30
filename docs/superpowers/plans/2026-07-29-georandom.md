@@ -1126,6 +1126,8 @@ git commit -m "feat(georandom): add GenerateGeoRandomPointCommand with validatio
 - Modify: `backend/src/Api/Program.cs`
 - Modify: `backend/src/Api/appsettings.json`
 
+**Note — the code sample below is superseded by two fixes required during Task 6's review (commit `071ec94`):** (1) `IValidator<GenerateGeoRandomPointCommand>` is resolved and called explicitly before `mediator.Send`, since this backend registers FluentValidation validators in DI but has no MediatR pipeline behavior that actually invokes them — a codebase-wide gap, worked around locally for this one endpoint rather than fixed globally (out of scope for this branch); (2) the endpoint injects `ILoggerFactory` (not `ILogger<GeoRandomEndpoints>`, which fails to compile — `GeoRandomEndpoints` is a `static` class and C# forbids static classes as generic type arguments) to log `GeoDataUnavailableException`'s inner exception, and sets a `Retry-After` header from `RateLimitExceededException.RetryAfter` on the `429` response. See the actual committed file for the final version.
+
 - [ ] **Step 1: Add the endpoint**
 
 ```csharp
