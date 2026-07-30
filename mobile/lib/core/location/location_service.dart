@@ -7,20 +7,24 @@ class LocationService {
   static const defaultLng = -3.7038;
 
   Future<LocationPermissionStatus> ensureLocationPermission() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return LocationPermissionStatus.serviceDisabled;
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return LocationPermissionStatus.serviceDisabled;
 
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return LocationPermissionStatus.deniedForever;
-    }
-    if (permission == LocationPermission.denied) {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        return LocationPermissionStatus.deniedForever;
+      }
+      if (permission == LocationPermission.denied) {
+        return LocationPermissionStatus.denied;
+      }
+      return LocationPermissionStatus.granted;
+    } catch (_) {
       return LocationPermissionStatus.denied;
     }
-    return LocationPermissionStatus.granted;
   }
 
   Future<(double lat, double lng)> getCurrentPosition() async {
