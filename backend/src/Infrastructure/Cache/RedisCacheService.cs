@@ -8,6 +8,7 @@ public interface IRedisCacheService
     Task<string?> GetAsync(string key);
     Task RemoveAsync(string key);
     Task<bool> ExistsAsync(string key);
+    Task<bool> SetIfNotExistsAsync(string key, string value, TimeSpan ttl);
 }
 
 public class RedisCacheService(IConnectionMultiplexer redis) : IRedisCacheService
@@ -26,4 +27,7 @@ public class RedisCacheService(IConnectionMultiplexer redis) : IRedisCacheServic
     public Task RemoveAsync(string key) => _db.KeyDeleteAsync(key);
 
     public Task<bool> ExistsAsync(string key) => _db.KeyExistsAsync(key);
+
+    public Task<bool> SetIfNotExistsAsync(string key, string value, TimeSpan ttl)
+        => _db.StringSetAsync(key, value, ttl, When.NotExists);
 }

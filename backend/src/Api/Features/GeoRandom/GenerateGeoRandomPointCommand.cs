@@ -21,9 +21,13 @@ public class GenerateGeoRandomPointCommandValidator : AbstractValidator<Generate
     }
 }
 
-public class RateLimitExceededException : Exception;
+public class RateLimitExceededException(TimeSpan retryAfter) : Exception
+{
+    public TimeSpan RetryAfter { get; } = retryAfter;
+}
 
-public class GeoDataUnavailableException(string message) : Exception(message);
+public class GeoDataUnavailableException(string message, Exception? innerException = null)
+    : Exception(message, innerException);
 
 public class GenerateGeoRandomPointCommandHandler(
     IGeoRandomCacheService cache,
@@ -35,19 +39,19 @@ public class GenerateGeoRandomPointCommandHandler(
     public async Task<GeoRandomPointResponse> Handle(GenerateGeoRandomPointCommand request, CancellationToken ct)
     {
         var throttleKey = $"georandom:throttle:{request.UserId}";
-        if (await throttle.ExistsAsync(throttleKey))
-            throw new RateLimitExceededException();
-        await throttle.SetAsync(throttleKey, "1", ThrottleWindow);
+        var acquired = await throttle.SetIfNotExistsAsync(throttleKey, "1", ThrottleWindow);
+        if (!acquired)
+            throw new RateLimitExceededException(ThrottleWindow);
 
         OverpassResult data;
         try
         {
             data = await cache.GetOrFetchAsync(request.Request.Latitude, request.Request.Longitude, ct);
         }
-        catch (HttpRequestException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
         {
             throw new GeoDataUnavailableException(
-                "No pudimos generar un punto ahora, intentá de nuevo en unos minutos.");
+                "No pudimos generar un punto ahora, intentá de nuevo en unos minutos.", ex);
         }
 
         var type = Enum.Parse<GeoRandomPointType>(request.Request.Type, ignoreCase: true);

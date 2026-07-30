@@ -18,7 +18,7 @@ public class GenerateGeoRandomPointCommandHandlerTests
     {
         var cache = Substitute.For<IGeoRandomCacheService>();
         var throttle = Substitute.For<IRedisCacheService>();
-        throttle.ExistsAsync(Arg.Any<string>()).Returns(false);
+        throttle.SetIfNotExistsAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>()).Returns(true);
         cache.GetOrFetchAsync(Arg.Any<double>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
             .Returns(new OverpassResult([new PoiPoint(40.42, -3.70)], []));
 
@@ -28,7 +28,7 @@ public class GenerateGeoRandomPointCommandHandlerTests
         var result = await handler.Handle(ValidCommand(), CancellationToken.None);
 
         result.Type.Should().Be("Atractor");
-        await throttle.Received(1).SetAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>());
+        await throttle.Received(1).SetIfNotExistsAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>());
     }
 
     [Fact]
@@ -36,14 +36,15 @@ public class GenerateGeoRandomPointCommandHandlerTests
     {
         var cache = Substitute.For<IGeoRandomCacheService>();
         var throttle = Substitute.For<IRedisCacheService>();
-        throttle.ExistsAsync(Arg.Any<string>()).Returns(true);
+        throttle.SetIfNotExistsAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>()).Returns(false);
 
         var handler = new GenerateGeoRandomPointCommandHandler(
             cache, new KdeCalculator(new SeededRandomSource(1)), throttle);
 
         var act = () => handler.Handle(ValidCommand(), CancellationToken.None);
 
-        await act.Should().ThrowAsync<RateLimitExceededException>();
+        (await act.Should().ThrowAsync<RateLimitExceededException>())
+            .Which.RetryAfter.Should().Be(TimeSpan.FromSeconds(4));
     }
 
     [Fact]
@@ -51,9 +52,26 @@ public class GenerateGeoRandomPointCommandHandlerTests
     {
         var cache = Substitute.For<IGeoRandomCacheService>();
         var throttle = Substitute.For<IRedisCacheService>();
-        throttle.ExistsAsync(Arg.Any<string>()).Returns(false);
+        throttle.SetIfNotExistsAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>()).Returns(true);
         cache.GetOrFetchAsync(Arg.Any<double>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException<OverpassResult>(new HttpRequestException("boom")));
+
+        var handler = new GenerateGeoRandomPointCommandHandler(
+            cache, new KdeCalculator(new SeededRandomSource(1)), throttle);
+
+        var act = () => handler.Handle(ValidCommand(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<GeoDataUnavailableException>();
+    }
+
+    [Fact]
+    public async Task Handle_Throws_WhenOverpassTimesOut()
+    {
+        var cache = Substitute.For<IGeoRandomCacheService>();
+        var throttle = Substitute.For<IRedisCacheService>();
+        throttle.SetIfNotExistsAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>()).Returns(true);
+        cache.GetOrFetchAsync(Arg.Any<double>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<OverpassResult>(new TaskCanceledException()));
 
         var handler = new GenerateGeoRandomPointCommandHandler(
             cache, new KdeCalculator(new SeededRandomSource(1)), throttle);

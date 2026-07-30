@@ -51,4 +51,26 @@ public class GenerateGeoRandomPointCommandValidatorTests
         var result = await Validator.ValidateAsync(ValidCommand(radiusMeters: radius));
         result.IsValid.Should().BeTrue();
     }
+
+    [Theory]
+    [InlineData(-91)]
+    [InlineData(91)]
+    public async Task LatitudeOutOfRange_FailsValidation(double lat)
+    {
+        var cmd = ValidCommand() with { Request = ValidCommand().Request with { Latitude = lat } };
+        var result = await Validator.ValidateAsync(cmd);
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("Latitude"));
+    }
+
+    [Theory]
+    [InlineData(-181)]
+    [InlineData(181)]
+    public async Task LongitudeOutOfRange_FailsValidation(double lon)
+    {
+        var cmd = ValidCommand() with { Request = ValidCommand().Request with { Longitude = lon } };
+        var result = await Validator.ValidateAsync(cmd);
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("Longitude"));
+    }
 }
