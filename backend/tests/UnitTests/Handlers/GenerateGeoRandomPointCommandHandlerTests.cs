@@ -3,6 +3,7 @@ using FluentAssertions;
 using Infrastructure.Cache;
 using Infrastructure.Geo;
 using NSubstitute;
+using StackExchange.Redis;
 using UnitTests.TestUtils;
 
 namespace UnitTests.Handlers;
@@ -72,6 +73,22 @@ public class GenerateGeoRandomPointCommandHandlerTests
         throttle.SetIfNotExistsAsync(Arg.Any<string>(), "1", Arg.Any<TimeSpan>()).Returns(true);
         cache.GetOrFetchAsync(Arg.Any<double>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException<OverpassResult>(new TaskCanceledException()));
+
+        var handler = new GenerateGeoRandomPointCommandHandler(
+            cache, new KdeCalculator(new SeededRandomSource(1)), throttle);
+
+        var act = () => handler.Handle(ValidCommand(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<GeoDataUnavailableException>();
+    }
+
+    [Fact]
+    public async Task Handle_Throws_WhenThrottleRedisFails()
+    {
+        var cache = Substitute.For<IGeoRandomCacheService>();
+        var throttle = Substitute.For<IRedisCacheService>();
+        throttle.SetIfNotExistsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<TimeSpan>())
+            .Returns(Task.FromException<bool>(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "boom")));
 
         var handler = new GenerateGeoRandomPointCommandHandler(
             cache, new KdeCalculator(new SeededRandomSource(1)), throttle);

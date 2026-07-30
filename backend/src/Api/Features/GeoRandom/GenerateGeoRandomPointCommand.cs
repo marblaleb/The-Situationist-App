@@ -2,6 +2,8 @@ using FluentValidation;
 using Infrastructure.Cache;
 using Infrastructure.Geo;
 using MediatR;
+using StackExchange.Redis;
+using System.Text.Json;
 
 namespace Api.Features.GeoRandom;
 
@@ -38,31 +40,32 @@ public class GenerateGeoRandomPointCommandHandler(
 
     public async Task<GeoRandomPointResponse> Handle(GenerateGeoRandomPointCommand request, CancellationToken ct)
     {
-        var throttleKey = $"georandom:throttle:{request.UserId}";
-        var acquired = await throttle.SetIfNotExistsAsync(throttleKey, "1", ThrottleWindow);
-        if (!acquired)
-            throw new RateLimitExceededException(ThrottleWindow);
-
-        OverpassResult data;
         try
         {
-            data = await cache.GetOrFetchAsync(request.Request.Latitude, request.Request.Longitude, ct);
+            var throttleKey = $"georandom:throttle:{request.UserId}";
+            var acquired = await throttle.SetIfNotExistsAsync(throttleKey, "1", ThrottleWindow);
+            if (!acquired)
+                throw new RateLimitExceededException(ThrottleWindow);
+
+            var data = await cache.GetOrFetchAsync(request.Request.Latitude, request.Request.Longitude, ct);
+
+            var type = Enum.Parse<GeoRandomPointType>(request.Request.Type, ignoreCase: true);
+            var (lat, lng) = kde.SelectPoint(
+                request.Request.Latitude,
+                request.Request.Longitude,
+                request.Request.RadiusMeters,
+                type,
+                data.Pois,
+                data.ExclusionRings);
+
+            return new GeoRandomPointResponse(lat, lng, type.ToString(), DateTimeOffset.UtcNow);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
+        catch (Exception ex) when (
+            ex is HttpRequestException or TaskCanceledException or RedisException or JsonException
+            && !ct.IsCancellationRequested)
         {
             throw new GeoDataUnavailableException(
                 "No pudimos generar un punto ahora, intentá de nuevo en unos minutos.", ex);
         }
-
-        var type = Enum.Parse<GeoRandomPointType>(request.Request.Type, ignoreCase: true);
-        var (lat, lng) = kde.SelectPoint(
-            request.Request.Latitude,
-            request.Request.Longitude,
-            request.Request.RadiusMeters,
-            type,
-            data.Pois,
-            data.ExclusionRings);
-
-        return new GeoRandomPointResponse(lat, lng, type.ToString(), DateTimeOffset.UtcNow);
     }
 }

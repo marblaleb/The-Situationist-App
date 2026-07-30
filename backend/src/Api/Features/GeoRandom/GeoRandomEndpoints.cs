@@ -24,6 +24,10 @@ public static class GeoRandomEndpoints
             var userId = Guid.Parse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
             var command = new GenerateGeoRandomPointCommand(userId, req);
 
+            // Manual invocation: this backend registers FluentValidation validators in DI
+            // but has no MediatR pipeline behavior that invokes them automatically (a
+            // pre-existing, codebase-wide gap — see plan doc Task 7 note). Every other
+            // endpoint here has the same gap; this one closes it locally.
             var validationResult = await validator.ValidateAsync(command);
             if (!validationResult.IsValid)
             {
