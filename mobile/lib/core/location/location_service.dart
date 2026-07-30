@@ -1,8 +1,27 @@
 import 'package:geolocator/geolocator.dart';
 
+enum LocationPermissionStatus { granted, denied, deniedForever, serviceDisabled }
+
 class LocationService {
   static const defaultLat = 40.4168;
   static const defaultLng = -3.7038;
+
+  Future<LocationPermissionStatus> ensureLocationPermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return LocationPermissionStatus.serviceDisabled;
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return LocationPermissionStatus.deniedForever;
+    }
+    if (permission == LocationPermission.denied) {
+      return LocationPermissionStatus.denied;
+    }
+    return LocationPermissionStatus.granted;
+  }
 
   Future<(double lat, double lng)> getCurrentPosition() async {
     try {
