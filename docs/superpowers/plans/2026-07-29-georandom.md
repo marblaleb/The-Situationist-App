@@ -1395,6 +1395,8 @@ git commit -m "feat(georandom): add GeoRandomRepository"
 - Create: `mobile/lib/features/georandom/bloc/georandom_bloc.dart`
 - Test: `mobile/test/features/georandom/georandom_bloc_test.dart`
 
+**Note — one deviation from the code sample below, decided during Task 9's review:** `GeoRandomPermissionRequired` must carry the actual `LocationPermissionStatus` (`denied`/`deniedForever`/`serviceDisabled`), not be a bare no-arg state. Reason: Task 12's UI needs to show different copy for "ask again" (`denied`) vs. "go to system settings" (`deniedForever`) vs. "turn on GPS" (`serviceDisabled`) — a single blanket message would be actively wrong for two of the three cases. See the actual committed file for the final version.
+
 - [ ] **Step 1: Write the failing tests**
 
 ```dart
