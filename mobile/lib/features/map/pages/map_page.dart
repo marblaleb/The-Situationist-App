@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -235,6 +236,29 @@ class _MapReady extends StatelessWidget {
                 }).toList(),
               ),
             ],
+          ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: () => context.push('/home/explore'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.bgVoid.withValues(alpha: 0.8),
+                  border: Border.all(color: AppColors.fgMuted, width: 1),
+                ),
+                child: const Text(
+                  '◈ EXPLORAR',
+                  style: TextStyle(
+                    color: AppColors.phosphor,
+                    fontFamily: 'JetBrainsMono',
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
+            ),
           ),
           if (state.selectedCluster != null)
             Positioned(

@@ -24,6 +24,9 @@ import 'features/deriva/pages/deriva_home_page.dart';
 import 'features/chat/pages/event_chat_page.dart';
 import 'features/events/data/events_repository.dart';
 import 'features/events/pages/create_event_page.dart';
+import 'features/georandom/bloc/georandom_bloc.dart';
+import 'features/georandom/data/georandom_repository.dart';
+import 'features/georandom/pages/georandom_page.dart';
 import 'features/map/bloc/map_bloc.dart';
 import 'features/events/pages/create_hub_page.dart';
 import 'features/map/pages/location_picker_page.dart';
@@ -168,6 +171,16 @@ class _SituationistAppState extends State<SituationistApp> {
           path: '/home/create-mission',
           builder: (_, __) => CreateMissionPage(
             apiClient: _apiClient,
+          ),
+        ),
+        GoRoute(
+          path: '/home/explore',
+          builder: (_, __) => BlocProvider(
+            create: (_) => GeoRandomBloc(
+              repository: GeoRandomRepository(_apiClient),
+              locationService: _locationService,
+            ),
+            child: const GeoRandomPage(),
           ),
         ),
         GoRoute(
