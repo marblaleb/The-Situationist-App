@@ -1,5 +1,6 @@
 using Infrastructure.Ai;
 using Infrastructure.Cache;
+using Infrastructure.Geo;
 using Infrastructure.Persistence;
 using Infrastructure.Workers;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,16 @@ public static class InfrastructureExtensions
 
         // Local content service (no external AI API required)
         services.AddSingleton<IAnthropicClient, LocalContentService>();
+
+        // GeoRandom (Módulo A) — Overpass client, geohash cache, KDE calculator
+        services.AddHttpClient<IOverpassClient, OverpassClient>(client =>
+        {
+            client.BaseAddress = new Uri(config["Overpass:BaseUrl"] ?? "https://overpass-api.de/api/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddScoped<IGeoRandomCacheService, GeoRandomCacheService>();
+        services.AddSingleton<IRandomSource, CryptoRandomSource>();
+        services.AddSingleton<KdeCalculator>();
 
         // Background workers
         services.AddHostedService<EventExpirationWorker>();

@@ -2,6 +2,7 @@ using Api.Features.Auth;
 using Api.Features.Chat;
 using Api.Features.Deriva;
 using Api.Features.Events;
+using Api.Features.GeoRandom;
 using Api.Features.Missions;
 using Api.Features.Profile;
 using Api.Features.Users;
@@ -162,6 +163,7 @@ app.MapMissionEndpoints();
 app.MapProfileEndpoints();
 app.MapChatEndpoints();
 app.MapUserEndpoints();
+app.MapGeoRandomEndpoints();
 
 // SignalR hub
 app.MapHub<EventHub>("/hubs/events");
