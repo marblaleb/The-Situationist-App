@@ -127,19 +127,30 @@ class _FormView extends StatelessWidget {
           if (state is GeoRandomLoading)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(
-                      color: AppColors.phosphor,
-                      strokeWidth: 1.5,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          color: AppColors.phosphor,
+                          strokeWidth: 1.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      MonoText('BUSCANDO...', color: AppColors.fgSecondary),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  MonoText('BUSCANDO...', color: AppColors.fgSecondary),
+                  const SizedBox(height: 4),
+                  MonoText(
+                    'puede tardar unos segundos la primera vez',
+                    color: AppColors.fgMuted,
+                    size: 10,
+                  ),
                 ],
               ),
             ),
