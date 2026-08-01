@@ -124,6 +124,25 @@ class _FormView extends StatelessWidget {
                 onTap: () => onTypeChanged(e.key),
               )),
           const SizedBox(height: 24),
+          if (state is GeoRandomLoading)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      color: AppColors.phosphor,
+                      strokeWidth: 1.5,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  MonoText('BUSCANDO...', color: AppColors.fgSecondary),
+                ],
+              ),
+            ),
           if (state is GeoRandomPermissionRequired)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),

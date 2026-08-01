@@ -10,6 +10,8 @@ class ApiException implements Exception {
   }
 
   static String _defaultMessage(int code) => switch (code) {
+        0 => '→ sin conexión. revisá tu internet e intentá de nuevo',
+        400 => '→ solicitud inválida',
         401 => '→ sesión expirada',
         403 => '→ acción no permitida',
         404 => '→ no encontrado',
