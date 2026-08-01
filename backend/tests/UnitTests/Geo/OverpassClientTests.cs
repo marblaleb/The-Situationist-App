@@ -123,7 +123,40 @@ public class OverpassClientTests
     [Fact]
     public async Task FetchAsync_Throws_WhenOverpassReturnsError()
     {
-        var handler = new FailingHttpMessageHandler();
+        var handler = new AlwaysFailingHandler(HttpStatusCode.ServiceUnavailable);
+        var client = new OverpassClient(new HttpClient(handler) { BaseAddress = new Uri("https://overpass-api.de/api/") });
+
+        var act = () => client.FetchAsync(40.4168, -3.7038, 2000);
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+        // One call per query (POI + exclusions run concurrently), no retries for a non-retryable status.
+        handler.CallCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task FetchAsync_RetriesOnce_WhenOverpassReturns504()
+    {
+        const string poisJson = """
+        {
+          "elements": [
+            { "type": "node", "lat": 40.42, "lon": -3.70 }
+          ]
+        }
+        """;
+        const string exclusionsJson = """{ "elements": [] }""";
+
+        var handler = new FlakyThenSucceedsHandler(poisJson, exclusionsJson);
+        var client = new OverpassClient(new HttpClient(handler) { BaseAddress = new Uri("https://overpass-api.de/api/") });
+
+        var result = await client.FetchAsync(40.4168, -3.7038, 2000);
+
+        result.Pois.Should().ContainSingle(p => p.Lat == 40.42 && p.Lng == -3.70);
+    }
+
+    [Fact]
+    public async Task FetchAsync_Throws_WhenOverpassReturns504Repeatedly()
+    {
+        var handler = new AlwaysFailingHandler(HttpStatusCode.GatewayTimeout);
         var client = new OverpassClient(new HttpClient(handler) { BaseAddress = new Uri("https://overpass-api.de/api/") });
 
         var act = () => client.FetchAsync(40.4168, -3.7038, 2000);
@@ -149,9 +182,43 @@ file class FakeHttpMessageHandler(string poisResponse, string exclusionsResponse
     }
 }
 
-file class FailingHttpMessageHandler : HttpMessageHandler
+file class AlwaysFailingHandler(HttpStatusCode statusCode) : HttpMessageHandler
 {
+    public int CallCount { get; private set; }
+
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
-        => Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+    {
+        CallCount++;
+        return Task.FromResult(new HttpResponseMessage(statusCode));
+    }
+}
+
+file class FlakyThenSucceedsHandler(string poisResponse, string exclusionsResponse) : HttpMessageHandler
+{
+    private int _poiCallCount;
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var requestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+        var isPoiQuery = requestBody.Contains("shop");
+
+        if (isPoiQuery)
+        {
+            _poiCallCount++;
+            if (_poiCallCount == 1)
+                return new HttpResponseMessage(HttpStatusCode.GatewayTimeout);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(poisResponse, Encoding.UTF8, "application/json"),
+            };
+        }
+
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(exclusionsResponse, Encoding.UTF8, "application/json"),
+        };
+    }
 }

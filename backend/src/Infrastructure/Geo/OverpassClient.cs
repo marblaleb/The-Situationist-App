@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 
 namespace Infrastructure.Geo;
@@ -29,9 +30,8 @@ public class OverpassClient(HttpClient httpClient) : IOverpassClient
         (
           node["shop"](around:{{radiusMeters}},{{latStr}},{{lngStr}});
           node["amenity"](around:{{radiusMeters}},{{latStr}},{{lngStr}});
-          way["building"](around:{{radiusMeters}},{{latStr}},{{lngStr}});
         );
-        out center;
+        out skel center;
         """;
 
         var response = await SendQueryAsync(query, ct);
@@ -59,7 +59,7 @@ public class OverpassClient(HttpClient httpClient) : IOverpassClient
           way["boundary"="protected_area"](around:{{radiusMeters}},{{latStr}},{{lngStr}});
           way["building"]["access"~"^(private|no)$"](around:{{radiusMeters}},{{latStr}},{{lngStr}});
         );
-        out geom;
+        out skel geom;
         """;
 
         var response = await SendQueryAsync(query, ct);
@@ -79,16 +79,29 @@ public class OverpassClient(HttpClient httpClient) : IOverpassClient
         return rings;
     }
 
+    private const int MaxAttempts = 2;
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(1);
+
     private async Task<OverpassResponse> SendQueryAsync(string query, CancellationToken ct)
     {
-        var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["data"] = query });
-        var httpResponse = await httpClient.PostAsync("interpreter", content, ct);
-        if (!httpResponse.IsSuccessStatusCode)
-            throw new HttpRequestException($"Overpass API {(int)httpResponse.StatusCode}");
+        for (var attempt = 1; ; attempt++)
+        {
+            var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["data"] = query });
+            var httpResponse = await httpClient.PostAsync("interpreter", content, ct);
 
-        var stream = await httpResponse.Content.ReadAsStreamAsync(ct);
-        var result = await JsonSerializer.DeserializeAsync<OverpassResponse>(stream, JsonOptions, ct);
-        return result ?? new OverpassResponse([]);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var stream = await httpResponse.Content.ReadAsStreamAsync(ct);
+                var result = await JsonSerializer.DeserializeAsync<OverpassResponse>(stream, JsonOptions, ct);
+                return result ?? new OverpassResponse([]);
+            }
+
+            var isRetryable = httpResponse.StatusCode is HttpStatusCode.GatewayTimeout or HttpStatusCode.TooManyRequests;
+            if (!isRetryable || attempt >= MaxAttempts)
+                throw new HttpRequestException($"Overpass API {(int)httpResponse.StatusCode}");
+
+            await Task.Delay(RetryDelay, ct);
+        }
     }
 
     private record OverpassResponse(List<OverpassElement> Elements);

@@ -39,6 +39,7 @@ public static class InfrastructureExtensions
         {
             client.BaseAddress = new Uri(config["Overpass:BaseUrl"] ?? "https://overpass-api.de/api/");
             client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("User-Agent", "TheSituationistApp/1.0 (+https://github.com/marblaleb/The-Situationist-App)");
         });
         services.AddScoped<IGeoRandomCacheService, GeoRandomCacheService>();
         services.AddSingleton<IRandomSource, CryptoRandomSource>();
